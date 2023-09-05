@@ -151,7 +151,7 @@ def bulge_loop(i, j, V, loop_parameters, stacking_parameters, sequence):
 def interior_loop(i, j, V, loop_parameters, sequence): 
     """
     Find the energy parameter of adding a interior loop. 
-    Penalty is added for asymmetric loops and increased stability due to AU basepair(s)
+    Penalty is added for asymmetric loops.
     Is able to handle loops of any size
     """
     basepairs = ['CG', 'GC', 'GU', 'UG']
@@ -174,24 +174,17 @@ def interior_loop(i, j, V, loop_parameters, sequence):
                 #else: 
                 #    IL_energy = loop_greater_10("IL", size, loop_parameters) + + V[ip, jp]
                 
-                #NOTE - Penalty for AU base pairs described in article but not used in example
-                #If one of the pairs is AU penalty is added
-                #if (bp in basepairs and bp_prime in penalty_pairs) or (bp in penalty_pairs and bp_prime in basepairs): 
-                #    IL_energy += 0.9 
-                #If both are AU or GU doubbel penalty is added
-                #elif all(pair in penalty_pairs for pair in [bp, bp_prime]):
-                #    IL_energy += 1.8
                 
                 #NOTE - Penalty for asymmetric loops described in artice, but not used in example
                 #Add penalty to energy if loop is asymmetric
                 #if (ip-i-1) != (j-jp-1): 
-                    #f = [0.7, 0.6, 0.4, 0.2, 0.1]
-                    #N1 = (ip-i-1)
-                    #N2 =(j-jp-1)
-                    #N = abs(N1-N2)
-                    #M = min(5, N1, N2)-1
-                    #penalty = min(6, N*f[M]) 
-                    #IL_energy += penalty
+                #    f = [0.4, 0.3, 0.2, 0.1]
+                #    N1 = (ip-i-1)
+                #    N2 =(j-jp-1)
+                #    N = abs(N1-N2)
+                #    M = min(4, N1, N2)-1
+                #    penalty = min(3, N*f[M]) 
+                #    IL_energy += penalty
                 
                 #Check if energy is smaller than current min
                 if IL_energy < energy: 
