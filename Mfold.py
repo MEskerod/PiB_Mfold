@@ -45,7 +45,7 @@ def find_E1(i, j, parameters):
 def stacking(i, j, V, stacking_parameters, sequence): 
     basepairs = ['AU', 'UA', 'CG', 'GC', 'GU', 'UG']
 
-    prev_bp = sequence[i+1] + sequence[j-1] 
+    prev_bp = sequence[i+1] + sequence[j-1]   
     
     if prev_bp in basepairs: 
         current_bp = sequence[i] + sequence[j]
