@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pandas as pd
 from io import StringIO
 
 from Mfold import(
@@ -46,11 +47,6 @@ def test_input():
 
     with pytest.raises(ValueError): 
         prepare_input('aacgy')
-
-def test_parameters(): 
-    """
-    """
-    assert 2==2
 
 def test_loop_greater_10(): 
     """
@@ -120,10 +116,69 @@ def test_stacking():
         for sequence in pairs[n]: 
            assert round(stacking(i, j, V, stack, sequence),2) == scores[n] 
 
-def test_bulgeloop(): 
+def test_bulgeloop_i(): 
+    """
+    Tests that bulge loops on the 5' end of size 2-10 returns the correct value
+    """
+    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+    
+    V = np.full((34,34), float('inf'))
+    V[11, :] = 0
+
+    sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
+
+    i_list, j_list = [x for x in range(8)], [x for x in range(33, 25, -1)]
+    
+    for n in range(8): 
+        i, j = i_list[n], j_list[n]
+        assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[10-i, "BL"]
+
+def test_bulgelopp_j():
+    """
+    Tests that bulge loops on the 3' end of size 2-10 returns the correct value
+    """
+    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+    
+    V = np.full((34,34), float('inf'))
+    V[:, 22] = 0
+
+    sequence = 'AAAAAAAAAAAAAAAAAUUUUUUUUUUUUUUUUU'
+
+    i_list, j_list = [x for x in range(8)], [x for x in range(33, 25, -1)]
+    
+    for n in range(8): 
+        i, j = i_list[n], j_list[n]
+        assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[10-i, "BL"]
+
+def test_bulgeloop_size1(): 
+    """
+    Tests that bulge loops of size 1 returns the loop parameter, stacking parameter and V[i-2, j-1]/V[i-1, j-2]
+    """
+    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+
+    V = np.full((10,10), float('inf'))
+    V[2, 8], V[2, 6] = 0, 0
+
+    sequences = ['AAAAAUUUUU', 'CCCCCGGGGG', 'UUUUUGGGGG']
+
+    #Bulge on i
+    i, j = 0, 9
+
+    for sequence in sequences: 
+        bp = sequence[i] + sequence[j]
+        assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[1, "BL"] + stack.at[bp, bp]
+    
+    #Bulge on j
+    i, j = 1, 8
+
+    for sequence in sequences: 
+        bp = sequence[i] + sequence[j]
+        assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[1, "BL"] + stack.at[bp, bp]
+
+def test_interiorloop_symmetric(): 
     assert 2==2
 
-def test_interiorloop(): 
+def test_interiorloop_asymmetric(): 
     assert 2==2
 
 def test_bifurcation(): 
