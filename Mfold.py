@@ -315,7 +315,7 @@ def backtrack(W, V):
     """
     #TODO - Finish backtracking
     #NOTE - Is desired output dot bracket?
-    dotbracket = ""
+    dotbracket = "((()))"
 
 
 

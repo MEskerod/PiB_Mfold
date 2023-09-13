@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-import pandas as pd
 from io import StringIO
 
 from Mfold import(
@@ -176,16 +175,70 @@ def test_bulgeloop_size1():
         assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[1, "BL"] + stack.at[bp, bp]
 
 def test_interiorloop_symmetric(): 
-    assert 2==2
+    """
+    Test that the energy of symmetric interior loops is the same as given in the table
+    """
+    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+
+    V = np.full((34,34), float('inf'))
+    V[6,27] = 0
+
+    sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
+
+    i_list = [x for x in range(5)]
+    j_ist = [x for x in range(33, 28, -1)]
+
+    for n in range(5): 
+        assert interior_loop(i_list[n], j_ist[n], V, loop, sequence) == loop.at[10-(n*2), "IL"]
 
 def test_interiorloop_asymmetric(): 
-    assert 2==2
+    """
+    Test that the energy of asymmetric interior loops is the same as given in the table + the penalty
+    """
+    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+
+    sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
+
+    penalties = [0.1*1, 0.2*2, 0.3*3, 0.4*4]
+
+    #5' loop > 3' end loop
+    i = 0
+    j_ist = [x for x in range(33, 29, -1)]
+    V = np.full((34,34), float('inf'))
+    V[6,28] = 0
+    for n in range(4): 
+        assert interior_loop(i, j_ist[n], V, loop, sequence) == loop.at[10-n-1, "IL"] + penalties[n]
+    
+    #3' loop > 5' end loop
+    i_list = [x for x in range(4)]
+    j = 33
+    V = np.full((34,34), float('inf'))
+    V[5,27] = 0
+    for n in range(4): 
+        assert interior_loop(i_list[n], j, V, loop, sequence) == loop.at[10-n-1, "IL"] + penalties[n]    
 
 def test_bifurcation(): 
     assert 2==2
 
 def test_computeV(): 
-    assert 2==2
+    """
+    Tests that if i and j base pair a value is calculated for V[i,j] and otherwise the value should be inf
+    """
+    basepairs = ['AU', 'UA', 'CG', 'GC', 'GU', 'UG']
+    parameters = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+    sequence = "ACGUACGUACGUACGUACGUACGU"
+    N = len(sequence)
+    V, W = np.zeros((N, N)), np.zeros((N, N))
+
+    for l in range(5, N): #Computes the best score for all subsequences that are longer than 5 nucleotides
+        for i in range(0, N-5): 
+            j = i+l
+            if j < N: 
+                compute_V(i, j, W, V, sequence, parameters)
+                if sequence[i]+sequence[j] in basepairs:
+                    assert V[i,j] != float('inf')
+                else: 
+                    assert V[i,j] == float('inf')
 
 def test_computeW(): 
     assert 2==2
@@ -194,7 +247,22 @@ def test_foldRNA():
     assert 2==2
 
 def test_optimal(): 
-    assert 2==2
+    """
+    Tests that the upper right corner is returned
+    """
+    assert find_optimal(np.array([[1, 2, 3, 4, 5], 
+                                  [6, 7, 8, 9, 10],
+                                  [11, 12, 13, 14, 15]])) == 5
+    
+    assert find_optimal(np.array([[0, 0, 1000], 
+                                 [0, 0, 0], 
+                                 [0, 0, 0],
+                                 [0, 0, 0],
+                                 [0, 0, 0]])) == 1000
+    
+    assert find_optimal(np.array([[1],
+                                 [5],
+                                 [5]])) == 1
 
 def test_backtrack(): 
     assert 2==2
