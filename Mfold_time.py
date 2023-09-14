@@ -1,4 +1,4 @@
-import time, os
+import time, os, argparse
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -22,29 +22,31 @@ def read_file(file_path):
     An error is given if the sequence contains not allowed letters 
     """
     with open(file_path, 'r') as f: 
-        sequence = prepare_input(read_fasta(f))
-    return sequence
+        sequence, name = read_fasta(f)
+    sequence = prepare_input(sequence)
+    return sequence, name
 
 def complete_fold(path): 
     """
     Add all the functionality to fold a RNA into RNA secondary structure using Mfold
     Returns the length of the sequence and the fold
     """
-    sequence =  read_file(path)
+    sequence, name =  read_file(path)
     N = len(sequence)
     parameters = read_parameters("loop_improved.csv", "pairing_parameters.csv")
     W, V = fold_rna(sequence, parameters)
-    fold = backtrack(W, V)
-    return N, fold
+    fold = backtrack(W, V, parameters, sequence)
+    return N, fold, name
 
-def write_fold_to_file(output_dir, file, fold): 
+def write_fold_to_file(output_dir, file, fold, name): 
     """
     Takes the dot bracket structure and writes it to a .txt file
-    The .txt file has the same name as the input file and is placed in output_dir
+    The .txt file has the same name as the input file and is placed in a folder called 'structures' in output_dir
     """
-    output_file = os.path.join(output_dir, os.path.splitext(os.path.basename(file))[0]+".txt")
+    output_file = os.path.join(output_dir, "structures", os.path.splitext(os.path.basename(file))[0]+".txt")
     with open(output_file, 'w') as f: 
-        f.write(fold)
+        f.write(f">{name}\n")
+        f.write(f"{fold}\n")
 
 def running_times(files, output_path): 
     """
@@ -57,11 +59,11 @@ def running_times(files, output_path):
 
     for file in files: 
         starttime = time.time()
-        N, fold = complete_fold(file)
+        N, fold, name = complete_fold(file)
         endtime = time.time()
         times.append(starttime-endtime)
         lengths.append(N)
-        write_fold_to_file(output_path, file, fold)
+        write_fold_to_file(output_path, file, fold, name)
 
     data = {'length': lengths, 
             'time': times}
@@ -89,12 +91,24 @@ def write_csv(data, output_file):
     df.to_csv(output_file, index=False)
 
 
-def main(input_dir, output_dir): 
+def main(): 
     """
     Calculates and plots the running time for all sequences in files in input_dir. 
     In output_dir are the folds of all the sequences, a .csv file with the times and a plot of the running time
     """
-    files = get_path_list(input_dir)
+     #Setting up the option parsing using the argparse module
+    argparser = argparse.ArgumentParser(
+        description="" )
+    #Adding arguments
+    #TODO - Add description/help for command line options
+    argparser.add_argument('input_dir') 
+    argparser.add_argument('output_dir')
+
+    args = argparser.parse_args()
+    
+    output_dir = args.output_dir
+    
+    files = get_path_list(args.input_dir)
     data = running_times(files, output_dir)
     plot_times(data, output_dir)
     write_csv(data, os.path.join(output_dir, "times.csv"))
@@ -103,4 +117,5 @@ def main(input_dir, output_dir):
 
 
 
-main("examples", "results")
+if __name__ == '__main__': 
+    main() 
