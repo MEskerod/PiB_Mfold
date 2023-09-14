@@ -27,7 +27,7 @@ def test_read_fasta():
     Test that read_fasta return the sequence as a string. 
     If the fasta file contains more than one sequence a ValueError is raised.
     """
-    assert read_fasta(StringIO('>seq1\naaaccctcg')) == 'aaaccctcg'
+    assert read_fasta(StringIO('>seq1\naaaccctcg')) == ('aaaccctcg', 'seq1')
 
     with pytest.raises(ValueError): 
         read_fasta(StringIO('>seq1\nAATTAAT\n>seq2\naattaat\n>seq3\nAaTtAaT'))
@@ -78,7 +78,7 @@ def test_E1():
         assert find_E1(i, j, loop) == parameters[n] 
 
     for j in range(12,32,5): 
-        assert find_E1(i, j, loop) == loop_greater_10("HL", j-i-1, loop)
+        assert find_E1(i, j, loop) == round(loop_greater_10("HL", j-i-1, loop), 5)
 
 def test_stacking(): 
     """
@@ -130,7 +130,7 @@ def test_bulgeloop_i():
     
     for n in range(8): 
         i, j = i_list[n], j_list[n]
-        assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[10-i, "BL"]
+        assert bulge_loop(i, j, V, loop, stack, sequence) == (loop.at[10-i, "BL"], (11, j-1))
 
 def test_bulgelopp_j():
     """
@@ -147,7 +147,7 @@ def test_bulgelopp_j():
     
     for n in range(8): 
         i, j = i_list[n], j_list[n]
-        assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[10-i, "BL"]
+        assert bulge_loop(i, j, V, loop, stack, sequence) == (loop.at[10-i, "BL"], (i+1, 22))
 
 def test_bulgeloop_size1(): 
     """
@@ -165,14 +165,14 @@ def test_bulgeloop_size1():
 
     for sequence in sequences: 
         bp = sequence[i] + sequence[j]
-        assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[1, "BL"] + stack.at[bp, bp]
+        assert bulge_loop(i, j, V, loop, stack, sequence) == (loop.at[1, "BL"] + stack.at[bp, bp], (i+2, j-1))
     
     #Bulge on j
     i, j = 1, 8
 
     for sequence in sequences: 
         bp = sequence[i] + sequence[j]
-        assert bulge_loop(i, j, V, loop, stack, sequence) == loop.at[1, "BL"] + stack.at[bp, bp]
+        assert bulge_loop(i, j, V, loop, stack, sequence) == (loop.at[1, "BL"] + stack.at[bp, bp], (i+1, j-2))
 
 def test_interiorloop_symmetric(): 
     """
@@ -189,7 +189,7 @@ def test_interiorloop_symmetric():
     j_ist = [x for x in range(33, 28, -1)]
 
     for n in range(5): 
-        assert interior_loop(i_list[n], j_ist[n], V, loop, sequence) == loop.at[10-(n*2), "IL"]
+        assert interior_loop(i_list[n], j_ist[n], V, loop, sequence) == (loop.at[10-(n*2), "IL"], (6, 27))
 
 def test_interiorloop_asymmetric(): 
     """
@@ -207,7 +207,7 @@ def test_interiorloop_asymmetric():
     V = np.full((34,34), float('inf'))
     V[6,28] = 0
     for n in range(4): 
-        assert interior_loop(i, j_ist[n], V, loop, sequence) == loop.at[10-n-1, "IL"] + penalties[n]
+        assert interior_loop(i, j_ist[n], V, loop, sequence) == (round(loop.at[10-n-1, "IL"] + penalties[n], 5), (6, 28))
     
     #3' loop > 5' end loop
     i_list = [x for x in range(4)]
@@ -215,7 +215,7 @@ def test_interiorloop_asymmetric():
     V = np.full((34,34), float('inf'))
     V[5,27] = 0
     for n in range(4): 
-        assert interior_loop(i_list[n], j, V, loop, sequence) == loop.at[10-n-1, "IL"] + penalties[n]    
+        assert interior_loop(i_list[n], j, V, loop, sequence) == (round(loop.at[10-n-1, "IL"] + penalties[n], 5), (5, 27))    
 
 def test_bifurcation(): 
     assert 2==2
