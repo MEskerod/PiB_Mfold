@@ -58,10 +58,11 @@ def running_times(files, output_path):
     lengths = []
 
     for file in files: 
+        print(f"Folding {file}")
         starttime = time.time()
         N, fold, name = complete_fold(file)
         endtime = time.time()
-        times.append(starttime-endtime)
+        times.append(endtime-starttime)
         lengths.append(N)
         write_fold_to_file(output_path, file, fold, name)
 

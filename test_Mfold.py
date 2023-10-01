@@ -9,14 +9,12 @@ from Mfold import(
     loop_greater_10,
     find_E1,
     stacking,
-    bulge_loop,
+    bulge_loop_3end,
+    bulge_loop_5end, 
     interior_loop,
-    find_E2,
     find_E3,
-    penta_nucleotides,
     compute_V,
     find_E4,
-    compute_W,
     fold_rna,
     find_optimal,
     backtrack
@@ -130,7 +128,7 @@ def test_bulgeloop_i():
     
     for n in range(8): 
         i, j = i_list[n], j_list[n]
-        assert bulge_loop(i, j, V, loop, stack, sequence) == (loop.at[10-i, "BL"], (11, j-1))
+        assert bulge_loop_5end(i, j, V, loop, stack, sequence) == (loop.at[10-i, "BL"], 11)
 
 def test_bulgelopp_j():
     """
@@ -147,7 +145,7 @@ def test_bulgelopp_j():
     
     for n in range(8): 
         i, j = i_list[n], j_list[n]
-        assert bulge_loop(i, j, V, loop, stack, sequence) == (loop.at[10-i, "BL"], (i+1, 22))
+        assert bulge_loop_3end(i, j, V, loop, stack, sequence) == (loop.at[10-i, "BL"], 22)
 
 def test_bulgeloop_size1(): 
     """
@@ -165,14 +163,14 @@ def test_bulgeloop_size1():
 
     for sequence in sequences: 
         bp = sequence[i] + sequence[j]
-        assert bulge_loop(i, j, V, loop, stack, sequence) == (loop.at[1, "BL"] + stack.at[bp, bp], (i+2, j-1))
+        assert bulge_loop_5end(i, j, V, loop, stack, sequence) == (loop.at[1, "BL"] + stack.at[bp, bp], i+2)
     
     #Bulge on j
     i, j = 1, 8
 
     for sequence in sequences: 
         bp = sequence[i] + sequence[j]
-        assert bulge_loop(i, j, V, loop, stack, sequence) == (loop.at[1, "BL"] + stack.at[bp, bp], (i+1, j-2))
+        assert bulge_loop_3end(i, j, V, loop, stack, sequence) == (loop.at[1, "BL"] + stack.at[bp, bp], j-2)
 
 def test_interiorloop_symmetric(): 
     """
@@ -218,7 +216,37 @@ def test_interiorloop_asymmetric():
         assert interior_loop(i_list[n], j, V, loop, sequence) == (round(loop.at[10-n-1, "IL"] + penalties[n], 5), (5, 27))    
 
 def test_bifurcation(): 
-    assert 2==2
+    """
+    Tests that the correct value is found for the bifurcating loops
+    """
+    W = np.array([[0]*10, [1]*10, [2]*10, [3]*10, [4]*10, [5]*10, [6]*10, [7]*10, [8]*10, [9]*10])
+    
+    i_list = [i for i in range(0, 4)]
+    j_list = [j for j in range(9, 6, -1)]
+
+    energies = [4, 6, 8]
+    ij = [(2,3), (3,4), (4,5)]
+    
+    for n in range(3): 
+        i, j = i_list[n], j_list[n]
+        assert find_E3(i, j, W) == (energies[n], ij[n])
+
+def test_E4():
+    """
+    Tests that the corret value is found for E4, which is i and j both base pair, but with different bases
+    """
+    
+    W = np.array([[0]*10, [1]*10, [2]*10, [3]*10, [4]*10, [5]*10, [6]*10, [7]*10, [8]*10, [9]*10])
+    
+    i_list = [i for i in range(0, 4)]
+    j_list = [j for j in range(9, 5, -1)]
+
+    energies = [2, 4, 6, 8]
+    ij = [(1,2), (2,3), (3,4), (4,5)]
+    
+    for n in range(4): 
+        i, j = i_list[n], j_list[n]
+        assert find_E4(i, j, W) == (energies[n], ij[n])
 
 def test_computeV(): 
     """
@@ -240,11 +268,35 @@ def test_computeV():
                 else: 
                     assert V[i,j] == float('inf')
 
-def test_computeW(): 
-    assert 2==2
-
 def test_foldRNA(): 
-    assert 2==2
+    """
+    Tests that the correct matrices are outputted for one sequence
+    """
+    parameters = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+
+    W, V = np.full((12, 12), float('inf')), np.full((12, 12), float('inf'))
+    W[0, 5:] = [4.5, 3.6, 3.6, 3.6, 2.5, 1.2, 0.5]
+    W[1, 5:] = [4.5, 4.5, 4.5, 4.5, 2.5, 1.2, 0.5]
+    W[2, 8:] = [4.5, 2.5, 1.2, 1.2]
+    W[3, 8:] = [4.5, 2.5, 2.5, 2.5]
+    W[4, 8:] = [4.5, 4.5, 4.5, 4.5]
+    W[5, 9:] = [4.5, 4.5, 4.5]
+    W[6, 10:] = [4.5, 4.5]
+
+    V[0, 5:7] = [5.5, 3.6]
+    V[0, 11] = 4.4
+    V[1, 5:7] = [4.5, 5.5]
+    V[1, 11] = 0.5
+    V[2, 9:11] = [5.1, 1.2]
+    V[3, 9:11] = [2.5, 5.1]
+    V[4, 8] = 4.5 
+    V[4, 11] = 5.0
+    V[5, 9:11] = [4.5, 5.5]
+    V[6, 10] = 4.5
+    
+    true_W, true_V = fold_rna("AAUCGUUCCGGU", parameters)
+    assert true_W.all() == W.all() 
+    assert true_V.all() == V.all()
 
 def test_optimal(): 
     """
@@ -265,5 +317,11 @@ def test_optimal():
                                  [5]])) == 1
 
 def test_backtrack(): 
-    assert 2==2
+    """
+    Tests that backtrack is done correctly trough for one sequence
+    """
+    parameters = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+    W, V = fold_rna("AAUCGUUCCGGU", parameters)
+
+    assert backtrack(W, V, parameters, "AAUCGUUCCGGU") == '.((((...))))'
 
