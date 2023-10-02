@@ -3,8 +3,8 @@ import pandas as pd
 from Bio import SeqIO
 from io import TextIOWrapper
 
-### FUNCTIONS USED BY ALL VERSIONS OF MFOLD OR BY RUNNING THE PROGRAM ###
-
+#TODO - Read and update all descriptons to match the content!
+#TODO - Add types for all parameters
 
 ### HELPER FUNCTIONS USED IN MAIN ###
 def read_fasta(input) -> str:
@@ -49,7 +49,7 @@ def read_general_parameters(file_loop, file_stacking):
         raise ValueError("One or both parameter files are empty or in an unexpected file format")
     return loops, stacking
 
-def write_db(name, sequence, fold, outfile: TextIOWrapper):
+def write_dbn(name, sequence, fold, outfile: TextIOWrapper):
     """
     """
     outfile.write(f"#Name: {name}\n")

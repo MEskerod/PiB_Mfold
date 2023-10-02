@@ -2,8 +2,11 @@ import math
 import numpy as np
 import pandas as pd
 
+#TODO - Read and update all descriptons to match the content!
+#TODO - Add types for all parameters
+
 ### FUNCTIONS USED BY SEVERAL VERSIONS ### 
-def loop_greater_10(max_lengths: dict, loop_parameters: pd.array):
+def make_loop_greater_10(max_lengths: dict):
     """
     Calculates the energy parameters for loops with a size greater than 10 
     The parameter is calculated as described in 'Improved predictions of secondary structures for RNA'
@@ -13,7 +16,7 @@ def loop_greater_10(max_lengths: dict, loop_parameters: pd.array):
 
     The function returns a function that can calculate loop energies given length, type
     """
-    def loop_function(loop_type, length):
+    def loop_function(loop_type, length, loop_parameters: pd.array):
         R = 0.001987 #In kcal/(mol*K)
         T = 310.15 #In K
         G_max = loop_parameters.at[max_lengths[loop_type],loop_type]
@@ -24,7 +27,7 @@ def loop_greater_10(max_lengths: dict, loop_parameters: pd.array):
     
     return loop_function
 
-def asymmetric_penalty(f, penalty_max): 
+def make_asymmetric_penalty(f, penalty_max): 
     """
     f has to be a list. In articles writen as f(1), f(2) and so forth
 
@@ -67,7 +70,7 @@ def stacking(i, j, V, stacking_parameters, sequence):
         energy = float('inf')
     return energy
 
-def bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, stacking: bool): 
+def bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, loop_greater_10, stacking: bool): 
     """
     Find the energy parameter of introducing a bulge loop on the 3' end. 
     If the size of the bulge loop is 1 and stacking=True, stacking on each side of the loop is retained and stacking parameter is added
@@ -95,7 +98,7 @@ def bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, sta
     
     return energy, ij
 
-def bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, stacking: bool):
+def bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, loop_greater_10, stacking: bool):
     """
     Find the energy parameter of introducing a bulge loop on the 5' end. 
     If the size of the bulge loop is 1 and stacking=True, stacking on each side of the loop is retained and stacking parameter is added
@@ -123,7 +126,7 @@ def bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, sta
 
     return energy, ij
 
-def interior_loop(i, j, V, loop_parameters, sequence, closing_penalty: bool, asymmetry: bool): 
+def interior_loop(i, j, V, loop_parameters, sequence, loop_greater_10, asymmetric_penalty_function, closing_penalty: bool, asymmetry: bool): 
     """
     Find the energy parameter of adding a interior loop. 
     Is able to handle loops of any size
@@ -145,7 +148,7 @@ def interior_loop(i, j, V, loop_parameters, sequence, closing_penalty: bool, asy
                 
                 #Add penalty to energy if loop is asymmetric
                 if asymmetry and ((ip-i-1) != (j-jp-1)): 
-                    IL_energy += asymmetric_penalty(i, ip, j, jp)
+                    IL_energy += asymmetric_penalty_function(i, ip, j, jp)
 
                 #Add penalty if closing base pairs are AU og GU base pairs
                 if closing_penalty: 
@@ -162,7 +165,7 @@ def interior_loop(i, j, V, loop_parameters, sequence, closing_penalty: bool, asy
     
     return energy, ij
 
-def find_E1(i, j, loop_parameters):
+def find_E1(i, j, loop_parameters, loop_greater_10):
     """
     E1 is when Si and Sj basepair and gives one internal edge 
     This gives a hairpin loop 
@@ -174,7 +177,7 @@ def find_E1(i, j, loop_parameters):
 
     return round(energy, 5)
 
-def find_E2(i, j, V, parameters, sequence, stacking: True, closing_penalty: True, asymmetry: True): 
+def find_E2(i, j, V, parameters, sequence, loop_greater_10, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
     """
     E2 is when Si and Sj contains two internal edged 
     Contains an edge between Si and Sj and an edge between Si' and Sj' 
@@ -186,9 +189,9 @@ def find_E2(i, j, V, parameters, sequence, stacking: True, closing_penalty: True
     stacking_parameters = parameters[1]
 
     energy = min(stacking(i, j, V, stacking_parameters, sequence), 
-                 bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, stacking)[0], 
-                 bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, stacking)[0], 
-                 interior_loop(i, j, V, loop_parameters, sequence, closing_penalty, asymmetry)[0])
+                 bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, loop_greater_10, bulge_stacking)[0], 
+                 bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, loop_greater_10, bulge_stacking)[0], 
+                 interior_loop(i, j, V, loop_parameters, sequence, loop_greater_10, asymmetric_penalty_function, closing_penalty, asymmetry_penalty)[0])
     return energy
 
 def find_E3(i, j, W): 
@@ -242,3 +245,69 @@ def penta_nucleotides(W, V, sequence, loop_parameters):
             V[i,j] = W[i,j ]= float('inf')
         else: 
             V[i,j] = W[i,j] = loop_parameters.at[3, "HL"] 
+
+def compute_V(i, j, W, V, sequence, parameters, loop_greater_10, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
+    """
+    Computes the minimization over E1, E2 and E3, which will give the value at V[i,j]
+    """
+    
+    basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
+
+    if sequence[i] + sequence[j] in basepairs:
+        v = min(find_E1(i, j, parameters[0], loop_greater_10), 
+                find_E2(i, j, V, parameters, sequence, loop_greater_10, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty), 
+                find_E3(i, j, W)[0])
+
+    else: 
+        v = float('inf')
+
+    V[i, j] = v
+
+def compute_W(i, j, W, V):
+    #FIXME - If parameters for dangling ends needs to be added, it might be here?
+    """
+    Computes the minimization over possibilities for W, which will give the value for W[i,j]
+     Possibilities are: 
+    - i or j in a structure (W[i+1, j] or W[i, j-1])
+    - i and j basepair with each other (V[i,j])
+    - i and j both base pair but not with each other (E4)
+    """
+    w = min(W[i+1,j], W[i,j-1], V[i,j], find_E4(i, j, W)[0])
+
+    W[i,j] = w
+
+
+def fold_rna(sequence, parameters, loop_greater_10, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
+    #FIXME - If compute W is changed this needs to be changed aswell
+    #FIXME - Change in some way to accomodate for different values for asymmetric loops and loop>10
+    """
+    Fills out the W and V matrices to find the fold that gives the minimum free energy
+    Follows Mfold as desribed by M. Zuker
+
+    The V matrix contains the minimum free energy for the subsequences i and j, if i and j has to form a pair. 
+    Is Si and Sj are not able to basepair the energy will be infinity (not possible)
+
+    The W matrix contains the minimum free energy for the subsequences i and j, but i and j does not have to basepair. 
+    """
+    N = len(sequence)
+    W, V = np.full([N, N], float('inf')), np.full([N, N], float('inf'))
+
+
+    #Fills out the table with all the penta nucleotide.
+    #Penta nucleotides are the base cases. If shorter they cannot be folded
+    penta_nucleotides(W, V, sequence, parameters[0]) 
+
+    for l in range(5, N): #Computes the best score for all subsequences that are longer than 5 nucleotides
+        for i in range(0, N-5): 
+            j = i+l
+            if j < N: 
+                compute_V(i, j, W, V, sequence, parameters, loop_greater_10, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty) 
+                compute_W(i, j, W, V)
+
+    return W, V
+
+def find_optimal(W) -> float: 
+    """
+    Find the final energy of the folded RNA
+    """
+    return W[0, -1]
