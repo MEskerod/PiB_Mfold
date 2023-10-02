@@ -216,7 +216,7 @@ def find_E3(i, j, W):
     energy = float('inf')
     ij = None
 
-    for ip in range(i+2, j-2):  #NOTE - Dobbelt check that no base pairing condition is needed
+    for ip in range(i+2, j-2):  
         loop_energy = W[i+1, ip] + W[ip+1, j-1]
         if loop_energy < energy: 
             energy = round(loop_energy, 5)

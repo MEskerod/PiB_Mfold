@@ -6,26 +6,6 @@ import pandas as pd
 #TODO - Add types for all parameters
 
 ### FUNCTIONS USED BY SEVERAL VERSIONS ### 
-def make_loop_greater_10(max_lengths: dict):
-    """
-    Calculates the energy parameters for loops with a size greater than 10 
-    The parameter is calculated as described in 'Improved predictions of secondary structures for RNA'
-
-    The max_lengths is a dictionary contain the length of the longest sequence of each type that's exeperimentally determined: 
-    max_lenghts = {"IL":?, "BL":?, "HL":?}
-
-    The function returns a function that can calculate loop energies given length, type
-    """
-    def loop_function(loop_type, length, loop_parameters: pd.array):
-        R = 0.001987 #In kcal/(mol*K)
-        T = 310.15 #In K
-        G_max = loop_parameters.at[max_lengths[loop_type],loop_type]
-
-        G = G_max + 1.75*R*T*math.log(length/max_lengths[loop_type])
-
-        return G
-    
-    return loop_function
 
 def make_asymmetric_penalty(f, penalty_max): 
     """
@@ -50,7 +30,20 @@ def make_asymmetric_penalty(f, penalty_max):
     
     return asymmetry_function
 
+def loop_greater_10(loop_type, length, loop_parameters: pd.array):
+    """
+    Calculates the energy parameters for loops with a size greater than 10 
+    The parameter is calculated as described in 'Improved predictions of secondary structures for RNA'
 
+    The function returns the energi parameter for a loop of a given type and size. 
+    """
+    R = 0.001987 #In kcal/(mol*K)
+    T = 310.15 #In K
+    G_max = loop_parameters.at[10, loop_type]
+
+    G = G_max + 1.75*R*T*math.log(length/10)
+
+    return G
 
 ### LOOP ENERGIES ###
 def stacking(i, j, V, stacking_parameters, sequence): 
@@ -70,7 +63,7 @@ def stacking(i, j, V, stacking_parameters, sequence):
         energy = float('inf')
     return energy
 
-def bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, loop_greater_10, stacking: bool): 
+def bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, stacking: bool): 
     """
     Find the energy parameter of introducing a bulge loop on the 3' end. 
     If the size of the bulge loop is 1 and stacking=True, stacking on each side of the loop is retained and stacking parameter is added
@@ -98,7 +91,7 @@ def bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, loo
     
     return energy, ij
 
-def bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, loop_greater_10, stacking: bool):
+def bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, stacking: bool):
     """
     Find the energy parameter of introducing a bulge loop on the 5' end. 
     If the size of the bulge loop is 1 and stacking=True, stacking on each side of the loop is retained and stacking parameter is added
@@ -126,7 +119,7 @@ def bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, loo
 
     return energy, ij
 
-def interior_loop(i, j, V, loop_parameters, sequence, loop_greater_10, asymmetric_penalty_function, closing_penalty: bool, asymmetry: bool): 
+def interior_loop(i, j, V, loop_parameters, sequence, asymmetric_penalty_function, closing_penalty: bool, asymmetry: bool): 
     """
     Find the energy parameter of adding a interior loop. 
     Is able to handle loops of any size
@@ -165,7 +158,7 @@ def interior_loop(i, j, V, loop_parameters, sequence, loop_greater_10, asymmetri
     
     return energy, ij
 
-def find_E1(i, j, loop_parameters, loop_greater_10):
+def find_E1(i, j, loop_parameters):
     """
     E1 is when Si and Sj basepair and gives one internal edge 
     This gives a hairpin loop 
@@ -177,7 +170,7 @@ def find_E1(i, j, loop_parameters, loop_greater_10):
 
     return round(energy, 5)
 
-def find_E2(i, j, V, parameters, sequence, loop_greater_10, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
+def find_E2(i, j, V, parameters, sequence, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
     """
     E2 is when Si and Sj contains two internal edged 
     Contains an edge between Si and Sj and an edge between Si' and Sj' 
@@ -189,9 +182,9 @@ def find_E2(i, j, V, parameters, sequence, loop_greater_10, asymmetric_penalty_f
     stacking_parameters = parameters[1]
 
     energy = min(stacking(i, j, V, stacking_parameters, sequence), 
-                 bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, loop_greater_10, bulge_stacking)[0], 
-                 bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, loop_greater_10, bulge_stacking)[0], 
-                 interior_loop(i, j, V, loop_parameters, sequence, loop_greater_10, asymmetric_penalty_function, closing_penalty, asymmetry_penalty)[0])
+                 bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, bulge_stacking)[0], 
+                 bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, bulge_stacking)[0], 
+                 interior_loop(i, j, V, loop_parameters, sequence, asymmetric_penalty_function, closing_penalty, asymmetry_penalty)[0])
     return energy
 
 def find_E3(i, j, W): 
@@ -246,7 +239,7 @@ def penta_nucleotides(W, V, sequence, loop_parameters):
         else: 
             V[i,j] = W[i,j] = loop_parameters.at[3, "HL"] 
 
-def compute_V(i, j, W, V, sequence, parameters, loop_greater_10, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
+def compute_V(i, j, W, V, sequence, parameters, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
     """
     Computes the minimization over E1, E2 and E3, which will give the value at V[i,j]
     """
@@ -254,8 +247,8 @@ def compute_V(i, j, W, V, sequence, parameters, loop_greater_10, asymmetric_pena
     basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
 
     if sequence[i] + sequence[j] in basepairs:
-        v = min(find_E1(i, j, parameters[0], loop_greater_10), 
-                find_E2(i, j, V, parameters, sequence, loop_greater_10, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty), 
+        v = min(find_E1(i, j, parameters[0]), 
+                find_E2(i, j, V, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty), 
                 find_E3(i, j, W)[0])
 
     else: 
@@ -277,7 +270,7 @@ def compute_W(i, j, W, V):
     W[i,j] = w
 
 
-def fold_rna(sequence, parameters, loop_greater_10, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
+def fold_rna(sequence, parameters, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
     #FIXME - If compute W is changed this needs to be changed aswell
     #FIXME - Change in some way to accomodate for different values for asymmetric loops and loop>10
     """
@@ -301,7 +294,7 @@ def fold_rna(sequence, parameters, loop_greater_10, asymmetric_penalty_function,
         for i in range(0, N-5): 
             j = i+l
             if j < N: 
-                compute_V(i, j, W, V, sequence, parameters, loop_greater_10, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty) 
+                compute_V(i, j, W, V, sequence, parameters, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty) 
                 compute_W(i, j, W, V)
 
     return W, V
@@ -311,3 +304,83 @@ def find_optimal(W) -> float:
     Find the final energy of the folded RNA
     """
     return W[0, -1]
+
+### BACTRACKING ### 
+#FIXME - The functions below should be change to accomodate different possibilities
+#FIXME - If dangling ends are incorporated these should be changed as well!
+def trace_V(i, j, W, V, dotbracket, parameters, sequence): 
+    """
+    """
+    basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
+    
+    loop_parameters, stacking_parameters = parameters[0], parameters[1]
+    
+    if V[i,j] == find_E1(i, j, loop_parameters): 
+        dotbracket[i], dotbracket[j] = '(', ')'
+        for n in range(i+1, j): 
+            dotbracket[n] = '.'
+    
+    elif V[i,j] == stacking(i, j, V, stacking_parameters, sequence): 
+        dotbracket[i], dotbracket[j] = '(', ')'
+        trace_V(i+1, j-1, W, V, dotbracket, parameters, sequence)
+    
+    elif V[i,j] == bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence)[0]: 
+        jp = bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence)[1]
+        dotbracket[i], dotbracket[j] = '(', ')'
+        for n in range(jp, j): 
+            dotbracket[n] = '.'
+        trace_V(i+1, jp, W, V, dotbracket, parameters, sequence)
+    
+    elif V[i,j] == bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence)[0]: 
+        ip = bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence)[1]
+        dotbracket[i], dotbracket[j] = '(', ')'
+        for n in range(i+1, ip): 
+            dotbracket[n] = '.'
+        trace_V(ip, j-1, W, V, dotbracket, parameters, sequence)
+    
+    elif V[i,j] == interior_loop(i, j, V, loop_parameters, sequence)[0]:
+        ij = interior_loop(i, j, V, loop_parameters, sequence)[1]
+        dotbracket[i], dotbracket[j] = '(', ')' 
+        for n in range(i+1, ij[0]): 
+            dotbracket[n] = '.'
+        for n in range(ij[1]+1, j): 
+            dotbracket[n] = '.'
+        trace_V(ij[0], ij[1], W, V, dotbracket, parameters, sequence)
+    
+    elif V[i, j] == find_E3(i, j, W)[0]: 
+        ij = find_E3(i, j, W)[1]
+        dotbracket[i], dotbracket[j] = '(', ')' 
+        trace_W(i+1, ij[0], W, V, dotbracket, parameters, sequence), trace_W(ij[1], j-1, W, V, dotbracket, parameters, sequence)
+
+def trace_W(i, j, W, V, dotbracket, parameters, sequence): 
+    """
+    """
+    if W[i,j] == W[i+1, j]: 
+        dotbracket[i] = '.'
+        trace_W(i+1, j, W, V, dotbracket, parameters, sequence)
+
+    elif W[i,j] == W[i, j-1]: 
+        dotbracket[j] = '.'
+        trace_W(i, j-1, W, V, dotbracket, parameters, sequence)
+
+    elif W[i, j] == V[i, j]: 
+        trace_V(i, j, W, V, dotbracket, parameters, sequence)
+
+    elif W[i,j] == find_E4(i, j, W)[0]: 
+        ij = find_E4(i,j,W)[1] 
+        trace_W(i, ij[0], W, V, dotbracket, parameters, sequence), trace_W(ij[1], j, W, V, dotbracket, parameters, sequence)
+
+
+
+def backtrack(W, V, parameters, sequence): 
+    """
+    Backtracks trough the W, V matrices to find the final fold
+    """
+    dotbracket =  ['?' for x in range(W.shape[0])]
+    
+    j = W.shape[0]-1
+    i = 0
+    
+    trace_W(i, j, W, V, dotbracket, parameters, sequence)
+
+    return "".join(dotbracket)

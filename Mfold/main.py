@@ -1,7 +1,7 @@
 import argparse, sys, time
 
 from help_functions import(read_fasta, prepare_input, read_general_parameters, write_dbn)
-from fold_functions import(make_loop_greater_10, make_asymmetric_penalty, fold_rna, find_optimal) #TODO - Add backtrack when ready!
+from fold_functions import(loop_greater_10, make_asymmetric_penalty, fold_rna, find_optimal, backtrack) #TODO - Add backtrack when ready!
 
 def main() -> None: 
     """
@@ -46,22 +46,20 @@ def main() -> None:
 
     parameters = read_general_parameters(loop_file, stacking_file)
 
+    #FIXME - Add version of Mfold which depends on an argument
     #TODO - Change the below to match with the arguments passed by user
-    loop_grater_10 = make_loop_greater_10({"IL":6, "BL":5, "HL":9})
     asymmetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
 
-    print(f"Fold {name}")
+    print(f"Fold {name}\n")
     start_time = time.time()
 
-    W, V = fold_rna(sequence, parameters, loop_grater_10, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
+    W, V = fold_rna(sequence, parameters, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
     energy = find_optimal(W)
-    
-    #FIXME - Add version of Mfold which depends on an argument
-    fold = "(())" #NOTE - Change fold
+    fold = backtrack(W, V, parameters, sequence) #NOTE - May need to be updated if dangling ends are added
 
     #Write to outfile
     if args.outfile == sys.stdout: 
-        write_dbn(name, sequence, fold, args.outfile)
+        args.outfile.write(fold + "\n\n")
     
     else: 
         outfile = args.outfile + ".dbn"
