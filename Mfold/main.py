@@ -1,6 +1,6 @@
 import argparse, sys, time
 
-from help_functions import(read_fasta, prepare_input, read_general_parameters, write_dbn)
+from help_functions import(read_fasta, prepare_input, read_general_parameters, write_dbn, parse_asymmetry_parameters)
 from fold_functions import(loop_greater_10, make_asymmetric_penalty, fold_rna, find_optimal, backtrack) #TODO - Add backtrack when ready!
 
 def main() -> None: 
@@ -18,7 +18,12 @@ def main() -> None:
     #Input can either be provided in a file or in stdin
     argparser.add_argument('-i', '--input') 
     argparser.add_argument('-f', '--file', type=argparse.FileType('r'))
-    #argparser.add_argument() #TODO - Add arguments for folding options and parameters
+    argparser.add_argument('-p', '--parameters') #TODO - Change!
+    argparser.add_argument('-b', '--bulge_stacking', action='store_true')
+    argparser.add_argument('-a', '--asymmetric', action='store_true')
+    argparser.add_argument('-c', '--closing_penalty', action='store_true')
+    argparser.add_argument('-A', '--asymmetry_parameters', type=parse_asymmetry_parameters, default=[[0.4, 0.3, 0.2, 0.1], 3])
+    #TODO - Add arguments for folding options and parameters
     #Setting up output. Writes to specified outfile or stdout
     argparser.add_argument('-o', '--outfile', metavar='output', default=sys.stdout)
 
@@ -36,9 +41,14 @@ def main() -> None:
         raise ValueError("No valid input sequence provided.")
     
     #TODO - Change the below to match with the arguments passed by user
-    bulge_stacking = True
-    closing_penalty = True
-    asymmetry_penalty = True
+    bulge_stacking = args.bulge_stacking
+    closing_penalty = args.closing_penalty
+    asymmetry_penalty = args.asymmetric
+
+    f, penalty_max = args.asymmetry_parameters
+    
+    print(f)
+    print(penalty_max)
 
     #TODO - Change the below to match with the arguments passed by user
     loop_file = "parameters/loop_1989.csv"
@@ -48,7 +58,7 @@ def main() -> None:
 
     #FIXME - Add version of Mfold which depends on an argument
     #TODO - Change the below to match with the arguments passed by user
-    asymmetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
+    asymmetric_penalty_function = make_asymmetric_penalty(f, penalty_max)
 
     print(f"Fold {name}\n")
     start_time = time.time()

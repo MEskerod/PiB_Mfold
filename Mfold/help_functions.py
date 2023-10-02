@@ -1,3 +1,4 @@
+import ast, argparse
 import numpy as np
 import pandas as pd
 from Bio import SeqIO
@@ -56,4 +57,22 @@ def write_dbn(name, sequence, fold, outfile: TextIOWrapper):
     outfile.write(f"#Length: {len(sequence)}\n")
     outfile.write(sequence + "\n")
     outfile.write(fold + "\n")
+
+
+def parse_asymmetry_parameters(input_string: str): 
+    """
+    """
+    try: 
+        #Split into the f and penalty max parts
+        arguments = input_string.split(';') 
+
+        #Evaluate the input safely and evaluate literals. Can hande lists. 
+        f = ast.literal_eval(arguments[0])
+
+        penalty_max = int(arguments[1])
+
+        return f, penalty_max
+    
+    except Exception as e: 
+        raise argparse.ArgumentTypeError(f"Invalid input: {input_string}. Error: {str(e)}")
 

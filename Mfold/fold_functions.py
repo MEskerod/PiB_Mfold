@@ -25,7 +25,6 @@ def make_asymmetric_penalty(f, penalty_max):
         N = abs(N1-N2)
         M = min(M_max, N1, N2)-1
         penalty = min(penalty_max, N*f[M]) 
-    
         return penalty
     
     return asymmetry_function
