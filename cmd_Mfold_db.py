@@ -14,8 +14,8 @@ def read_ct(file) -> tuple():
     """
     Takes a .ct file and returns the sequence as a string and a list of base pairs
     """
-    length = 0
     pairs = []
+    sequence = ""
 
     with open(file, 'r') as f:
         lines = [line.split() for line in f.readlines()]
@@ -31,11 +31,11 @@ def read_ct(file) -> tuple():
     lines = lines[header_lines:]
     
     for line in lines: 
-        length += 1
+        sequence += line[1]
         if line[4] != '0': 
             pairs.append((int(line[0])-1, int(line[4])-1)) #The files start indexing from 1
 
-    return length, pairs
+    return sequence, pairs
 
 def remove_files(filename): 
     """
@@ -57,10 +57,12 @@ def ct_to_db(length, pairs):
      
     return "".join(db)
 
-def db_to_file(db, filename, name): 
+def db_to_file(sequence, db, filename, name): 
     with open(filename, 'w') as f: 
-        f.write(f">{name}\n")
-        f.write(f"{db}\n")
+        f.write(f"#Name: {name}\n")
+        f.write(f"#Length: {len(sequence)}\n")
+        f.write(sequence + "\n")
+        f.write(db + "\n")
 
 def main(): 
     argparser = argparse.ArgumentParser(description="" )
@@ -79,15 +81,15 @@ def main():
     basename = os.path.splitext(os.path.basename(file))[0]
     ct_file = basename + '.ct'
 
-    length, pairs = read_ct(ct_file) 
+    sequence, pairs = read_ct(ct_file) 
 
     remove_files(file)
 
-    db = ct_to_db(length, pairs)
+    db = ct_to_db(len(sequence), pairs)
 
-    outfile = os.path.join(args.outputdir, basename + '.txt')
+    outfile = os.path.join(args.outputdir, basename + '.dbn')
 
-    db_to_file(db, outfile, basename)
+    db_to_file(sequence, db, outfile, basename)
 
 if __name__ == '__main__': 
      main()
