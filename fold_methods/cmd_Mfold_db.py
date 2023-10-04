@@ -13,7 +13,7 @@ def run_Mfold(filename):
     result.wait()
 
 def read_ct(file) -> tuple():
-    """
+    """  
     Takes a .ct file and returns the sequence as a string and a list of base pairs
     """
     pairs = []

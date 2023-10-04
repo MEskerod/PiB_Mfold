@@ -1,4 +1,4 @@
-### FILES USED BY MULTIPLE FILES IN FOLDER ###
+### FILES USED BY MULTIPLE FILES IN FOLDER ###  
 
 def db_to_file(sequence, db, filename, name): 
     with open(filename, 'w') as f: 
