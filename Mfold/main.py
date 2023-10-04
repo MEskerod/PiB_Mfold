@@ -18,12 +18,14 @@ def main() -> None:
     #Input can either be provided in a file or in stdin
     argparser.add_argument('-i', '--input') 
     argparser.add_argument('-f', '--file', type=argparse.FileType('r'))
-    argparser.add_argument('-p', '--parameters') #TODO - Change!
+    argparser.add_argument('-lp', '--loop_parameters', type=str, choices=['1988', '1989'], default='1989')
     argparser.add_argument('-b', '--bulge_stacking', action='store_true')
     argparser.add_argument('-a', '--asymmetric', action='store_true')
     argparser.add_argument('-c', '--closing_penalty', action='store_true')
     argparser.add_argument('-A', '--asymmetry_parameters', type=parse_asymmetry_parameters, default=[[0.4, 0.3, 0.2, 0.1], 3])
-    #TODO - Add arguments for folding options and parameters
+    argparser.add_argument('-lf', '--loop_file')
+    argparser.add_argument('-sf', '--stacking_file')
+    #TODO - Add option that makes it possible to supply our own parameter files
     #Setting up output. Writes to specified outfile or stdout
     argparser.add_argument('-o', '--outfile', metavar='output', default=sys.stdout)
 
@@ -40,24 +42,30 @@ def main() -> None:
     if not sequence: 
         raise ValueError("No valid input sequence provided.")
     
-    #TODO - Change the below to match with the arguments passed by user
     bulge_stacking = args.bulge_stacking
     closing_penalty = args.closing_penalty
     asymmetry_penalty = args.asymmetric
 
     f, penalty_max = args.asymmetry_parameters
-    
-    print(f)
-    print(penalty_max)
 
     #TODO - Change the below to match with the arguments passed by user
-    loop_file = "parameters/loop_1989.csv"
-    stacking_file = "parameters/stacking_1988.csv"
+    if args.loop_file: 
+        loop_file = args.loop_file
+    elif args.loop_parameters == '1988':
+        loop_file = "parameters/loop_1988.csv"
+    elif args.loop_parameters == '1989':
+        loop_file = "parameters/loop_1989.csv"
+
+
+    if args.stacking_file:
+        stacking_file = args.stacking_file
+    else: 
+        stacking_file = "parameters/stacking_1988.csv"
 
     parameters = read_general_parameters(loop_file, stacking_file)
 
     #FIXME - Add version of Mfold which depends on an argument
-    #TODO - Change the below to match with the arguments passed by user
+
     asymmetric_penalty_function = make_asymmetric_penalty(f, penalty_max)
 
     print(f"Fold {name}\n")
@@ -65,7 +73,7 @@ def main() -> None:
 
     W, V = fold_rna(sequence, parameters, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
     energy = find_optimal(W)
-    fold = backtrack(W, V, parameters, sequence) #NOTE - May need to be updated if dangling ends are added
+    fold = backtrack(W, V, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty) #NOTE - May need to be updated if dangling ends are added
 
     #Write to outfile
     if args.outfile == sys.stdout: 

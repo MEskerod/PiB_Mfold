@@ -307,7 +307,7 @@ def find_optimal(W) -> float:
 ### BACTRACKING ### 
 #FIXME - The functions below should be change to accomodate different possibilities
 #FIXME - If dangling ends are incorporated these should be changed as well!
-def trace_V(i, j, W, V, dotbracket, parameters, sequence): 
+def trace_V(i, j, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
     """
     """
     basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
@@ -321,57 +321,57 @@ def trace_V(i, j, W, V, dotbracket, parameters, sequence):
     
     elif V[i,j] == stacking(i, j, V, stacking_parameters, sequence): 
         dotbracket[i], dotbracket[j] = '(', ')'
-        trace_V(i+1, j-1, W, V, dotbracket, parameters, sequence)
+        trace_V(i+1, j-1, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
     
-    elif V[i,j] == bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence)[0]: 
-        jp = bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence)[1]
+    elif V[i,j] == bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, bulge_stacking)[0]: 
+        jp = bulge_loop_3end(i, j, V, loop_parameters, stacking_parameters, sequence, bulge_stacking)[1]
         dotbracket[i], dotbracket[j] = '(', ')'
         for n in range(jp, j): 
             dotbracket[n] = '.'
-        trace_V(i+1, jp, W, V, dotbracket, parameters, sequence)
+        trace_V(i+1, jp, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
     
-    elif V[i,j] == bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence)[0]: 
-        ip = bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence)[1]
+    elif V[i,j] == bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, bulge_stacking)[0]: 
+        ip = bulge_loop_5end(i, j, V, loop_parameters, stacking_parameters, sequence, bulge_stacking)[1]
         dotbracket[i], dotbracket[j] = '(', ')'
         for n in range(i+1, ip): 
             dotbracket[n] = '.'
-        trace_V(ip, j-1, W, V, dotbracket, parameters, sequence)
+        trace_V(ip, j-1, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
     
-    elif V[i,j] == interior_loop(i, j, V, loop_parameters, sequence)[0]:
-        ij = interior_loop(i, j, V, loop_parameters, sequence)[1]
+    elif V[i,j] == interior_loop(i, j, V, loop_parameters, sequence, asymmetric_penalty_function, closing_penalty, asymmetry_penalty)[0]:
+        ij = interior_loop(i, j, V, loop_parameters, sequence, asymmetric_penalty_function, closing_penalty, asymmetry_penalty)[1]
         dotbracket[i], dotbracket[j] = '(', ')' 
         for n in range(i+1, ij[0]): 
             dotbracket[n] = '.'
         for n in range(ij[1]+1, j): 
             dotbracket[n] = '.'
-        trace_V(ij[0], ij[1], W, V, dotbracket, parameters, sequence)
+        trace_V(ij[0], ij[1], W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
     
     elif V[i, j] == find_E3(i, j, W)[0]: 
         ij = find_E3(i, j, W)[1]
         dotbracket[i], dotbracket[j] = '(', ')' 
-        trace_W(i+1, ij[0], W, V, dotbracket, parameters, sequence), trace_W(ij[1], j-1, W, V, dotbracket, parameters, sequence)
+        trace_W(i+1, ij[0], W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty), trace_W(ij[1], j-1, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
 
-def trace_W(i, j, W, V, dotbracket, parameters, sequence): 
+def trace_W(i, j, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
     """
     """
     if W[i,j] == W[i+1, j]: 
         dotbracket[i] = '.'
-        trace_W(i+1, j, W, V, dotbracket, parameters, sequence)
+        trace_W(i+1, j, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
 
     elif W[i,j] == W[i, j-1]: 
         dotbracket[j] = '.'
-        trace_W(i, j-1, W, V, dotbracket, parameters, sequence)
+        trace_W(i, j-1, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
 
     elif W[i, j] == V[i, j]: 
-        trace_V(i, j, W, V, dotbracket, parameters, sequence)
+        trace_V(i, j, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
 
     elif W[i,j] == find_E4(i, j, W)[0]: 
         ij = find_E4(i,j,W)[1] 
-        trace_W(i, ij[0], W, V, dotbracket, parameters, sequence), trace_W(ij[1], j, W, V, dotbracket, parameters, sequence)
+        trace_W(i, ij[0], W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty), trace_W(ij[1], j, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
 
 
 
-def backtrack(W, V, parameters, sequence): 
+def backtrack(W, V, parameters, sequence, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
     """
     Backtracks trough the W, V matrices to find the final fold
     """
@@ -380,6 +380,6 @@ def backtrack(W, V, parameters, sequence):
     j = W.shape[0]-1
     i = 0
     
-    trace_W(i, j, W, V, dotbracket, parameters, sequence)
+    trace_W(i, j, W, V,dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
 
     return "".join(dotbracket)

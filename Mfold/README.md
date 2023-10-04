@@ -32,8 +32,12 @@ Default parameters will give the newest of the implementedd versions.
 
 **PARAMETERS**
 ```
--p --parameters
+-lp --loop_parameters 'year' (default = 1989)
 ```
+Makes it possible to chose from different predefined sets of loops parameters.    
+The choices are: 
+- 1988 (described in __)
+- 1989 (described in __)
 
 **PENALTY FOR ASYMMETRIC INTERIOR LOOPS**   
 Asymmetric interior loops are not as stable as symmetric and i some versions of Mfold this is penalized according to the size of the loop. 
@@ -41,7 +45,7 @@ Asymmetric interior loops are not as stable as symmetric and i some versions of 
 ```
 -a --asymmetric
 ```
-If -a/--asymmetric is given a penalty for asymmetric loops is added. A default parameters for the penalty function is used. It can be specified using the flag ??? (see blow)
+If -a/--asymmetric is given a penalty for asymmetric loops is added. A default parameters for the penalty function is used. It can be specified using the flag -A/--asymmetry_parameters (see blow)
 
 **CONTINUED BASE PAIR STACKING FOR BULGE LOOPS OF SIZE 1**   
 In the Turner article from 1989 continued stacking for bulge loops of size 1 was described. When the bulge is not larger than 1 the favorable energy of stacking is retained and the parameter for base pairing is added to the one for the loop. 
@@ -70,13 +74,33 @@ The parameters for the asymmetric penalty function is supplied as:
 ```
 **NOTE:** The asymmetry parameters must be supplied enclosed in " " and with *f* (list) seperated from *penalty_max* (int) by a semicolon
 
+**SUPPLY DIFFERENT STACKING OR LOOP PARAMETERS**
+```
+-lf --loop_file 'file_name.csv'
+
+-sf --stacking_file 'file_name.csv'
+```
+
+If different parameter files are needed they can be supplied using -lf or -sf.    
+The parameter files should be .csv files. 
+
+The file with loop parameters has to have a header of *IL,BL,HL* refering to interior loop, bulge loop and hairpin loop. It should contain 11 rows with the energy for sizes from 0-10. If the loop size is not allowed (ex. HL, size 3) it is left empty.   
+
+The file containing stacking parameters
 
 ## Arguments for versions described in articles 
 **Original version with parameters from Turner 1988:**   
 
-
+```
+python3 main -f/-i 'input' -lp 1988 (-o 'output_file')
+```
 
 **Version described by Turner in 1988:**   
+```
+python3 main -f/-i 'input' -lp 1988 -b -a -c -A "[0.7, 0.6, 0.4, 0.2, 0.1]; 6" (-o 'output_file')
+```
 
-
-**Version described by Jaeger and Zuker in 1989 without dangling ends and pentanucleotides:**   
+**Version described by Jaeger and Zuker in 1989 without dangling ends and pentanucleotides:**  
+```
+python3 main -f/-i 'input' -b -a -c (-o 'output_file')
+``` 
