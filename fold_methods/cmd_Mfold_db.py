@@ -1,6 +1,8 @@
 from io import TextIOWrapper
 import argparse, subprocess, os
 
+from main import db_to_file
+
 def run_Mfold(filename): 
     """
     """
@@ -57,12 +59,6 @@ def ct_to_db(length, pairs):
      
     return "".join(db)
 
-def db_to_file(sequence, db, filename, name): 
-    with open(filename, 'w') as f: 
-        f.write(f"#Name: {name}\n")
-        f.write(f"#Length: {len(sequence)}\n")
-        f.write(sequence + "\n")
-        f.write(db + "\n")
 
 def main(): 
     argparser = argparse.ArgumentParser(description="" )
