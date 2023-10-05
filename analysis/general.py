@@ -1,6 +1,11 @@
 import pandas as pd
 import os, random
 
+from Bio import SeqIO
+from Bio.Seq import Seq 
+from Bio.SeqRecord import SeqRecord
+
+
 ### GENERAL FUNCTIONS ###
 def get_path_list(dir_name): 
     """
@@ -18,13 +23,14 @@ def write_csv(data, output_file):
     df = pd.DataFrame(data)
     df.to_csv(output_file, index=False)
 
-def write_txt(lines: list, outputfile): 
+def write_fasta(sequence, seq_id, file_name):
     """
-    Writes lines in a txt file
     """
-    with open(outputfile, 'w') as f: 
-        for line in lines: 
-            f.write(line + "\n")
+    seq = Seq(sequence)
+    record =  SeqRecord(seq, id = seq_id)
+
+    with open(file_name, "w") as f: 
+        SeqIO.write(record, f, "fasta")
 
 def make_dir(dir_name):
     """
