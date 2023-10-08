@@ -159,7 +159,6 @@ def main() -> None:
     start_time = time.time()
 
     S = fill_S(sequence, parameters)
-    print(S)
     energy = find_optimal(S)
     fold = fold_RNA(S, sequence, parameters)
 
