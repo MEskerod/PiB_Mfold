@@ -256,7 +256,6 @@ def compute_V(i, j, W, V, sequence, parameters, asymmetric_penalty_function, bul
     V[i, j] = v
 
 def compute_W(i, j, W, V):
-    #FIXME - If parameters for dangling ends needs to be added, it might be here?
     """
     Computes the minimization over possibilities for W, which will give the value for W[i,j]
      Possibilities are: 
@@ -270,8 +269,6 @@ def compute_W(i, j, W, V):
 
 
 def fold_rna(sequence, parameters, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
-    #FIXME - If compute W is changed this needs to be changed aswell
-    #FIXME - Change in some way to accomodate for different values for asymmetric loops and loop>10
     """
     Fills out the W and V matrices to find the fold that gives the minimum free energy
     Follows Mfold as desribed by M. Zuker
@@ -305,8 +302,6 @@ def find_optimal(W) -> float:
     return W[0, -1]
 
 ### BACTRACKING ### 
-#FIXME - The functions below should be change to accomodate different possibilities
-#FIXME - If dangling ends are incorporated these should be changed as well!
 def trace_V(i, j, W, V, dotbracket, parameters, sequence, asymmetric_penalty_function, bulge_stacking: bool, closing_penalty: bool, asymmetry_penalty: bool): 
     """
     """

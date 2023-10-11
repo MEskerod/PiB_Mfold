@@ -1,7 +1,7 @@
 import argparse, sys, time
 
 from help_functions import(read_fasta, prepare_input, read_general_parameters, write_dbn, parse_asymmetry_parameters)
-from fold_functions import(loop_greater_10, make_asymmetric_penalty, fold_rna, find_optimal, backtrack) #TODO - Add backtrack when ready!
+from fold_functions import(loop_greater_10, make_asymmetric_penalty, fold_rna, find_optimal, backtrack) 
 
 def main() -> None: 
     """
@@ -25,7 +25,6 @@ def main() -> None:
     argparser.add_argument('-A', '--asymmetry_parameters', type=parse_asymmetry_parameters, default=[[0.4, 0.3, 0.2, 0.1], 3])
     argparser.add_argument('-lf', '--loop_file')
     argparser.add_argument('-sf', '--stacking_file')
-    #TODO - Add option that makes it possible to supply our own parameter files
     #Setting up output. Writes to specified outfile or stdout
     argparser.add_argument('-o', '--outfile', metavar='output', default=sys.stdout)
 
@@ -48,7 +47,6 @@ def main() -> None:
 
     f, penalty_max = args.asymmetry_parameters
 
-    #TODO - Change the below to match with the arguments passed by user
     if args.loop_file: 
         loop_file = args.loop_file
     elif args.loop_parameters == '1988':
@@ -64,8 +62,6 @@ def main() -> None:
 
     parameters = read_general_parameters(loop_file, stacking_file)
 
-    #FIXME - Add version of Mfold which depends on an argument
-
     asymmetric_penalty_function = make_asymmetric_penalty(f, penalty_max)
 
     print(f"Fold {name}\n")
@@ -73,7 +69,7 @@ def main() -> None:
 
     W, V = fold_rna(sequence, parameters, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty)
     energy = find_optimal(W)
-    fold = backtrack(W, V, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty) #NOTE - May need to be updated if dangling ends are added
+    fold = backtrack(W, V, parameters, sequence, asymmetric_penalty_function, bulge_stacking, closing_penalty, asymmetry_penalty) 
 
     #Write to outfile
     if args.outfile == sys.stdout: 
@@ -85,7 +81,7 @@ def main() -> None:
             write_dbn(name, sequence, fold, f)
 
     print("Finished in {} second".format(round(time.time() - start_time, 2)))
-    print(f"Energy of optimal fold is {energy} kcal/mol\n") #NOTE - Change energy
+    print(f"Energy of optimal fold is {energy} kcal/mol\n") 
 
 if __name__ == '__main__': 
     main()
