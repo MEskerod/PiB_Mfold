@@ -4,6 +4,20 @@ import matplotlib.pyplot as plt
 def time_plot(): 
     return
 
+def plot_times(data: dict, output_path):
+    #NOTE - Copied from different file. Does not work as it is
+    """
+    Running time is plotted as a function of sequence length
+    """
+    x = data["length"] 
+    y = data["time"]
+
+    plt.scatter(x, y, color = 'black')
+    plt.ylabel("Running time (s)")
+    plt.xlabel("Sequence length")
+    plt.grid(True)
+    plt.savefig(os.path.join(output_path, "runningtimes.jpeg"))
+
 def plot(lenghts: list, distances: dict): 
     #FIXME - Does not work and is just copied from different file
     colors = ["red", "blue", "green", "yellow"]
