@@ -19,6 +19,7 @@ def get_path_list(dir_name):
 def write_csv(data, output_file): 
     """
     Data is written to a .csv file
+    The input data can be a dictionary, with the keys being the column names and values being the columns
     """
     df = pd.DataFrame(data)
     df.to_csv(output_file, index=False)
@@ -83,6 +84,13 @@ def create_quadratic_function(y_intercept: int, point: tuple):
     return quadratic
 
 def calculate_slice_lengths(num_slices, min_length, initial_length):
+    """
+    Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a uadratic function. 
+
+    num_slices: Number of slices wanted 
+    min_length: Length of the shortest slice 
+    initial_length: Length of the sequence to slice from, which is also equal to the maximum length
+    """
     slice_lengths = []
     quadratic = create_quadratic_function(min_length, (num_slices, initial_length))
     for x in range(1, num_slices+1): 
