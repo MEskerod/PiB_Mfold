@@ -26,6 +26,11 @@ def write_csv(data, output_file):
 
 def write_fasta(sequence, seq_id, file_name):
     """
+    Writes a sequence to a fasta file
+
+    sequence: the sequence that has to be written to a file 
+    seq_id: the id/name of the sequence
+    file_name: the name of the file. Has to have the extension .fasta
     """
     seq = Seq(sequence)
     record =  SeqRecord(seq, id = seq_id)
@@ -35,12 +40,40 @@ def write_fasta(sequence, seq_id, file_name):
 
 def make_dir(dir_name):
     """
+    Make a directory, if the directory does not exist
     """
     if not os.path.exists(dir_name):
             os.makedirs(dir_name)
     return dir_name
 
+def read_dbn_file(file):
+    """
+    Read the dot bracket structure and sequence from a .dbn file. 
+    The .dbn file has header lines that starts with #
+    The first non-header line is the sequence and the second is the dot bracket structure
 
+    Returns dotbracket structure, sequence
+    """
+    lines = []
+    with open(file, 'r') as f: 
+        for line in f: 
+            if line.startswith('#'): 
+                continue
+            lines.append(line.strip())
+
+    return lines[1], lines[0] #dot bracket, sequence
+
+def read_fasta(input) -> str:
+    """
+    Reads in a FASTA-file and returns the sequence
+    If there is more than one sequence in the FASTA file it gives an error
+    """
+    records = list(SeqIO.parse(input, 'fasta'))
+    
+    if len(records) > 1: 
+        raise ValueError("FASTA file contains more than one sequence")
+
+    return str(records[0].seq), records[0].id
 
 ### ANALYSIS FUNCTIONS ###
 
@@ -61,6 +94,10 @@ def get_len_and_type(file_list):
 
 def generate_random_sequence(length: int, alphabet: list): 
     """
+    Generates a random seuence of a given length. 
+    
+    length: length of the sequence that is generated
+    alphabet: the characters from which to generate the sequence
     """
     random_sequence = "".join(random.choice(alphabet) for _ in range(length))
     return random_sequence

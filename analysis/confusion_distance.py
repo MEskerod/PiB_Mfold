@@ -1,30 +1,7 @@
 import os, argparse
 import matplotlib.pyplot as plt
 
-def get_path_list(dir_name): 
-    """
-    Makes a list of all the files in the given directory. 
-    Returns a list of "dir_name/file_name"
-    """
-    file_names = [os.path.join(dir_name, name) for name in os.listdir(dir_name)]
-    return file_names
-
-def read_dbn_file(file):
-    """
-    Read the dot bracket structure and sequence from a .dbn file. 
-    The .dbn file has header lines that starts with #
-    The first non-header line is the sequence and the second is the dot bracket structure
-
-    Returns dotbracket structure, sequence
-    """
-    lines = []
-    with open(file, 'r') as f: 
-        for line in f: 
-            if line.startswith('#'): 
-                continue
-            lines.append(line.strip())
-
-    return lines[1], lines[0] #dot bracket, sequence
+from general import get_path_list, read_dbn_file
 
 def distance(structure1, structure2): 
     true_positive = 0
