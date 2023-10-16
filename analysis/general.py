@@ -82,14 +82,15 @@ def get_len_and_type(file_list):
     The files has to be named as ... (len_type_rest)
     """
     
-    len_and_type = []
+    lenghts = []
+    types = []
 
     for file in file_list: 
         splits = os.path.basename(file).split('_')
-        len_and_type.append((splits[0], splits[1]))
-
-    
-    return len_and_type
+        lenghts.append(splits[0])
+        types.append(splits[1])
+        
+    return lenghts, types
 
 
 def generate_random_sequence(length: int, alphabet: list): 

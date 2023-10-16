@@ -5,7 +5,7 @@ from general import make_dir, generate_random_sequence, calculate_slice_lengths,
 def time_consumption(func_name, func, file_list):
     """
     """
-    output_dir = make_dir(os.path.join("..", "structures", func_name + "_structures"))
+    output_dir = make_dir(os.path.join("..", "structures_example", func_name + "_structures")) #structures
     
     times = []
     for file in file_list: 
@@ -43,8 +43,8 @@ def time_synthetic(n_sequences, min_length, max_length, func):
         write_fasta(sequence[:n], "sythetic sequence", temporary_fasta)
         output_dir = os.getcwd()
         start_time = time.time()
-        func("temp.fasta", output_dir)
+        func("temp.fasta", output_dir) 
         times.append(time.time() - start_time)
     os.remove(temporary_fasta)
-    os.remove("temp.dbn")
+    #os.remove("temp.dbn")
     return times

@@ -1,5 +1,6 @@
 import os, argparse
 import matplotlib.pyplot as plt
+from itertools import combinations
 
 from general import get_path_list, read_dbn_file
 
@@ -43,7 +44,7 @@ def calculate_F(file1, file2):
 
     F = F_score(confusion_matrix)
 
-    return (len(structure1), F)
+    return F
 
 def distances(dir1, dir2): 
     
@@ -52,14 +53,30 @@ def distances(dir1, dir2):
     
     structures2 = get_path_list(dir1)
     
-    
-    lengths = []
     Fs = []
 
     for n in range(len(structures1)): 
-        l, F = calculate_F(structures1[n], structures2[n])
-        lengths.append(l)
+        assert os.path.basename(structures1[n]) == os.path.basename(structures2[n])
+        F = calculate_F(structures1[n], structures2[n])
         Fs.append(F)
 
-    return lengths, Fs
+    return Fs
+
+
+def Fdistances(folders): 
+    """
+    """
+    distance_dict = {}
+    
+    folder_combinations = list(combinations(folders, 2))
+    print(folder_combinations)
+
+    for combination in folder_combinations: 
+        folder1 = os.path.basename(combination[0]).split('_')[0]
+        folder2 = os.path.basename(combination[1]).split('_')[0]
+        name = folder1 + '_' + folder2
+        distance = distances(combination[0], combination[1])
+        distance_dict[name] = distance
+
+    return distance_dict
 
