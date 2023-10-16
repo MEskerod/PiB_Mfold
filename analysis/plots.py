@@ -1,22 +1,25 @@
 import matplotlib.pyplot as plt
+import os
 
 ### PLOT FUNCTIONS ###
-def time_plot(): 
-    return
-
-def plot_times(data: dict, output_path):
-    #NOTE - Copied from different file. Does not work as it is
+def plot_synthetic_real_times(lengths, synthetic_time, real_time, output_path):
     """
     Running time is plotted as a function of sequence length
     """
-    x = data["length"] 
-    y = data["time"]
-
-    plt.scatter(x, y, color = 'black')
+    plt.scatter(lengths, real_time, label = "Real RNA sequences", s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
+    plt.plot(lengths, real_time, color = 'blue', linestyle = '--', linewidth = 0.8)
+    plt.scatter(lengths, synthetic_time, label = "Synthetic sequences", s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
+    plt.plot(lengths, synthetic_time, color = 'red', linestyle = '--', linewidth = 0.8)
     plt.ylabel("Running time (s)")
     plt.xlabel("Sequence length")
-    plt.grid(True)
-    plt.savefig(os.path.join(output_path, "runningtimes.jpeg"))
+    plt.legend()
+    plt.grid(True, linestyle = '--')
+    plt.savefig(os.path.join(output_path, "synthetic_vs_real_times.jpeg"))
+
+def plot_Nussinov(): 
+    """
+    """
+    return
 
 def plot(lenghts: list, distances: dict): 
     #FIXME - Does not work and is just copied from different file

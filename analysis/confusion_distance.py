@@ -69,7 +69,6 @@ def Fdistances(folders):
     distance_dict = {}
     
     folder_combinations = list(combinations(folders, 2))
-    print(folder_combinations)
 
     for combination in folder_combinations: 
         folder1 = os.path.basename(combination[0]).split('_')[0]
