@@ -50,15 +50,15 @@ def main() -> None:
     if args.loop_file: 
         loop_file = args.loop_file
     elif args.loop_parameters == '1988':
-        loop_file = "parameters/loop_1988.csv"
+        loop_file = "../Mfold/parameters/loop_1988.csv"
     elif args.loop_parameters == '1989':
-        loop_file = "parameters/loop_1989.csv"
+        loop_file = "../Mfold/parameters/loop_1989.csv"
 
 
     if args.stacking_file:
         stacking_file = args.stacking_file
     else: 
-        stacking_file = "parameters/stacking_1988.csv"
+        stacking_file = "../Mfold/parameters/stacking_1988.csv"
 
     parameters = read_general_parameters(loop_file, stacking_file)
 

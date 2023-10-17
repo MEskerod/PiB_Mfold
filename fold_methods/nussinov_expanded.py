@@ -153,7 +153,7 @@ def main() -> None:
     if not sequence: 
         raise ValueError("No valid input sequence provided.")
 
-    parameters = read_parameter("pairing_parameters.csv")
+    parameters = read_parameter("../fold_methods/pairing_parameters.csv")
     
     print(f"Fold {name}")
     start_time = time.time()
