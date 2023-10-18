@@ -8,8 +8,6 @@ def plot_synthetic_real_times(synthethic_lengths, real_lengths, synthetic_time, 
     """
     Running time is plotted as a function of sequence length
     """
-    
-    print(len(synthethic_lengths), len(synthetic_time))
 
     plt.figure()
     plt.scatter(real_lengths, real_time, label = "Real RNA sequences", s=20, edgecolors='blue', facecolors = 'none', linewidths=1)

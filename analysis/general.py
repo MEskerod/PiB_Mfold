@@ -87,7 +87,7 @@ def get_len_and_type(file_list):
 
     for file in file_list: 
         splits = os.path.basename(file).split('_')
-        lenghts.append(splits[0])
+        lenghts.append(int(splits[0]))
         types.append(splits[1])
         
     return lenghts, types
