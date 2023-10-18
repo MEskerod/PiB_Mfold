@@ -27,15 +27,17 @@ def main():
     
     #Generate times for all functions
     time_dict = run_functions_time(func_time_real, file_list) #Time for real data
-
-    #Find time for synthetic seuences and add to time_dict #NOTE - Uncomment
-    synthetic_time = time_synthetic(2, 20, 22, run_Mfold_newest)
-    time_dict["NewestMfoldSynthetic"] = synthetic_time
-
     time_dict["Length"] = lengths
 
     #Save times to .csv
     write_csv(time_dict, "../results/time_table.csv")
+
+    #Find time for synthetic seuences and add to time_dict #NOTE - Uncomment
+    synthetic_time, synthethic_lengths = time_synthetic(5, 20, 50, run_Mfold_newest)
+    synthetic_dict = {"NewestMfoldSynthetic": synthetic_time, "Length": synthethic_lengths}
+    write_csv(synthetic_dict, "../results/syntethic_times.csv")
+
+    
 
     ### CALCULATE DISTANCES BETWEEN STRUCTURES ###
     #Get a list of all the folders with structures: 
@@ -54,7 +56,7 @@ def main():
     write_csv(distance_dict, "../results/distance_table.csv")
 
     ### MAKE PLOTS ###
-    plot_synthetic_real_times(lengths, time_dict["NewestMfoldSynthetic"], time_dict["NewestMfold"], "../results") #NOTE - Change times!!!
+    plot_synthetic_real_times(synthethic_lengths, lengths, synthetic_time, time_dict["NewestMfold"], "../results") #NOTE - Change times!!!
     plot_MfoldOriginal_newest(lengths, time_dict["OriginalMfold"], time_dict["NewestMfold"], "../results")
     plot_Nussinov(lengths, time_dict["Nussinov"], "../results")
 

@@ -43,8 +43,10 @@ def time_synthetic(n_sequences, min_length, max_length, func):
     output_dir = os.getcwd()
     
     times = []
+    lengths = []
     
     for index, n in enumerate(slices): 
+        lengths.append(len(sequence[:n]))
         write_fasta(sequence[:n], "sythetic sequence", temporary_fasta)
         print(f"Fold slice {index}/{len(slices)}")
         start_time = time.time()
@@ -52,4 +54,4 @@ def time_synthetic(n_sequences, min_length, max_length, func):
         times.append(time.time() - start_time)
     os.remove(temporary_fasta)
     os.remove("temp.dbn")
-    return times
+    return times, lengths

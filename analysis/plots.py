@@ -4,15 +4,18 @@ import os
 import numpy as np
 
 ### PLOT FUNCTIONS ###
-def plot_synthetic_real_times(lengths, synthetic_time, real_time, output_path):
+def plot_synthetic_real_times(synthethic_lengths, real_lengths, synthetic_time, real_time, output_path):
     """
     Running time is plotted as a function of sequence length
     """
+    
+    print(len(synthethic_lengths), len(synthetic_time))
+
     plt.figure()
-    plt.scatter(lengths, real_time, label = "Real RNA sequences", s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
-    plt.plot(lengths, real_time, color = 'blue', linestyle = '--', linewidth = 0.8)
-    plt.scatter(lengths, synthetic_time, label = "Synthetic sequences", s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
-    plt.plot(lengths, synthetic_time, color = 'red', linestyle = '--', linewidth = 0.8)
+    plt.scatter(real_lengths, real_time, label = "Real RNA sequences", s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
+    plt.plot(real_lengths, real_time, color = 'blue', linestyle = '--', linewidth = 0.8)
+    plt.scatter(synthethic_lengths, synthetic_time, label = "Synthetic sequences", s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
+    plt.plot(synthethic_lengths, synthetic_time, color = 'red', linestyle = '--', linewidth = 0.8)
     plt.ylabel("Running time (s)")
     plt.xlabel("Sequence length")
     plt.legend()
@@ -93,4 +96,3 @@ def plot_distances(distance_dict: dict, key_label, output_file):
     ax.grid(axis='y', linestyle = '--') 
 
     plt.savefig(output_file)
-    return
