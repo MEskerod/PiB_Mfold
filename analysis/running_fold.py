@@ -13,6 +13,12 @@ def run_Mfold_web(file, outdir):
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
 
+    if p.returncode != 0:
+        print(f"Command failed for Mfold Web for {file} with return code {p.returncode}")
+        print("Error output:")
+        print(p.stderr.read().decode('utf-8'))
+
+
 def run_Mfold_orginal(file, outdir):
     """
     """
@@ -20,6 +26,11 @@ def run_Mfold_orginal(file, outdir):
     command = f"python3 ../Mfold/main.py -f {file} -lp 1988 -o {outputfile}"
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
+
+    if p.returncode != 0:
+        print(f"Command failed for Mfold original for {file} with return code {p.returncode}")
+        print("Error output:")
+        print(p.stderr.read().decode('utf-8'))
 
 def run_Mfold_newest(file, outdir): 
     """
@@ -29,6 +40,11 @@ def run_Mfold_newest(file, outdir):
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
 
+    if p.returncode != 0:
+        print(f"Command failed for newest version of Mfold for {file} with return code {p.returncode}")
+        print("Error output:")
+        print(p.stderr.read().decode('utf-8'))
+
 def run_Nussinov(file, outdir): 
     """
     """
@@ -36,3 +52,8 @@ def run_Nussinov(file, outdir):
     command = f"python3 ../fold_methods/nussinov_expanded.py -f {file} -o {outputfile}"
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
+
+    if p.returncode != 0:
+        print(f"Command failed for Nussinov for {file} with return code {p.returncode}")
+        print("Error output:")
+        print(p.stderr.read().decode('utf-8'))
