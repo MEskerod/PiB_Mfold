@@ -22,20 +22,12 @@ def read_ct(file) -> tuple():
     with open(file, 'r') as f:
         lines = [line.split() for line in f.readlines()]
 
-    #Remove header - if any
-    header_lines = 0
-    for line in lines: 
-        if line[0] == '1': 
-                break
-        else: 
-            header_lines += 1
-
-    lines = lines[header_lines:]
+    length = int(lines[0][0])
     
-    for line in lines: 
-        sequence += line[1]
-        if line[4] != '0': 
-            pairs.append((int(line[0])-1, int(line[4])-1)) #The files start indexing from 1
+    for n in range(1, length+1):
+        sequence += lines[n][1]
+        if lines[n][4] != '0': 
+            pairs.append((int(lines[n][0])-1, int(lines[n][4])-1)) #The files start indexing from 1
 
     return sequence, pairs
 
