@@ -29,8 +29,8 @@ def main():
     time_dict = run_functions_time(func_time_real, file_list) #Time for real data
 
     #Find time for synthetic seuences and add to time_dict #NOTE - Uncomment
-    #synthetic_time = time_synthetic(50, 50, 800, run_Mfold_newest)
-    #time_dict["NewestMfoldSynthetic"] = synthetic_time
+    synthetic_time = time_synthetic(2, 20, 22, run_Mfold_newest)
+    time_dict["NewestMfoldSynthetic"] = synthetic_time
 
     time_dict["Length"] = lengths
 
@@ -54,7 +54,7 @@ def main():
     write_csv(distance_dict, "../results/distance_table.csv")
 
     ### MAKE PLOTS ###
-    #plot_synthetic_real_times(lengths, time_dict["NewestMfoldSynthetic"], time_dict["NewestMfold"], "../results") #NOTE - Change times!!!
+    plot_synthetic_real_times(lengths, time_dict["NewestMfoldSynthetic"], time_dict["NewestMfold"], "../results") #NOTE - Change times!!!
     plot_MfoldOriginal_newest(lengths, time_dict["OriginalMfold"], time_dict["NewestMfold"], "../results")
     plot_Nussinov(lengths, time_dict["Nussinov"], "../results")
 
