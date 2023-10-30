@@ -5,7 +5,25 @@ import numpy as np
 import pandas as pd 
 
 
-from main import db_to_file, read_parameter
+def db_to_file(sequence, db, filename, name): 
+    with open(filename, 'w') as f: 
+        f.write(f"#Name: {name}\n")
+        f.write(f"#Length: {len(sequence)}\n")
+        f.write(sequence + "\n")
+        f.write(db + "\n")
+
+
+def read_parameter(file_stacking): 
+    """
+
+    """
+    try:
+        stacking = pd.read_csv(file_stacking, index_col=0)
+    except FileNotFoundError:
+        raise FileNotFoundError("Parameter file not found")
+    except pd.errors.EmptyDataError:
+        raise ValueError("Parameter file is empty or in an unexpected file format")
+    return stacking
 
 def read_fasta(input) -> str:
     """
@@ -54,12 +72,12 @@ def pairing_score(i, j, S, sequence, parameters):
 def bifurcating_score(i, j, S):
     """
     """
-    score = float('-inf')
+    score = float('inf')
     end_k = 0
 
     for k in range(i+1, j-1): 
         sub_score = S[i, k] + S[k+1, j]
-        if sub_score > score: 
+        if sub_score < score: 
             score = sub_score
             end_k = k
     return score, end_k

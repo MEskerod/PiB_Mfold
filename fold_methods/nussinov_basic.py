@@ -3,8 +3,6 @@ from io import TextIOWrapper
 from Bio import SeqIO
 import numpy as np
 
-from main import db_to_file
-
 def read_fasta(input) -> str:
     """
     Reads in a FASTA-file and returns the sequence
