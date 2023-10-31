@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from io import StringIO
 
-from nussinov_expanded import read_fasta, prepare_input, pairing_score, bifurcating_score, fill_S, find_optimal, backtrack, fold_RNA, db_to_file, read_parameter
+from nussinov_expanded import read_fasta, prepare_input, pairing_score, bifurcating_score, fill_S, find_optimal, fold_RNA, read_parameter
 
 def test_read_fasta(): 
     """
@@ -108,5 +108,5 @@ def test_fold_RNA():
                        [0, 0, 0, 0, 0, 0, 0, 0, 0], 
                        [0, 0, 0, 0, 0, 0, 0, 0, 0]])
     sequence = "GGGAAAUCC"
-    
+
     assert fold_RNA(S, sequence, parameters) == '(((...)))' 
