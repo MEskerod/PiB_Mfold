@@ -32,7 +32,7 @@ def main() -> None:
 
     if args.input: 
         sequence = prepare_input(args.input)
-        name = "User inputted sequence"
+        name = "user inputted sequence"
 
     if args.file: 
         sequence, name = read_fasta(args.file)

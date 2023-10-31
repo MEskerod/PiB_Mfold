@@ -66,8 +66,9 @@ def parse_asymmetry_parameters(input_string: str):
         #Split into the f and penalty max parts
         arguments = input_string.split(';') 
 
-        #Evaluate the input safely and evaluate literals. Can hande lists. 
+        #Evaluate the input safely and evaluate literals. Can handle lists. 
         f = ast.literal_eval(arguments[0])
+        assert type(f) == list
 
         penalty_max = int(arguments[1])
 

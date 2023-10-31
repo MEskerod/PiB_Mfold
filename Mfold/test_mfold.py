@@ -1,12 +1,11 @@
-import pytest
+import pytest, sys, subprocess
 import numpy as np
 from io import StringIO
 
 from fold_functions import (make_asymmetric_penalty, loop_greater_10, stacking, bulge_loop_3end, bulge_loop_5end, interior_loop, 
-                            find_E1, find_E2, find_E3, find_E4, penta_nucleotides, compute_V, compute_W, fold_rna, find_optimal, 
-                            trace_V, trace_W, backtrack)
+                            find_E1, find_E3, find_E4, compute_V, fold_rna, find_optimal, backtrack)
 
-from help_functions import (read_fasta, prepare_input, read_general_parameters, write_dbn, parse_asymmetry_parameters)
+from help_functions import (read_fasta, prepare_input, read_general_parameters, parse_asymmetry_parameters)
 
 ### TEST HELPER FUNCTIONS ###
 def test_read_fasta(): 
@@ -34,7 +33,24 @@ def test_input():
     with pytest.raises(ValueError): 
         prepare_input('aacgy')
 
+def test_parse_asymmetry_parameters(): 
+    assert parse_asymmetry_parameters("[0.4, 0.3, 0.2, 0.1]; 3") == ([0.4, 0.3, 0.2, 0.1], 3)
+    assert parse_asymmetry_parameters("[0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3]; 123") == ([0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3], 123) 
 
+    with pytest.raises(Exception): 
+        parse_asymmetry_parameters("[0.4, 0.3, 0.2, 0.1]")
+    
+    with pytest.raises(Exception): 
+        parse_asymmetry_parameters("0.4, 0.3, 0.2, 0.1; 3")
+    
+    with pytest.raises(Exception): 
+        parse_asymmetry_parameters("[0.4, 0.3, 0.2, 0.1], 3")
+    
+    with pytest.raises(Exception): 
+        parse_asymmetry_parameters("[0.4, 0.3, 0.2, 0.1] 3")
+    
+    with pytest.raises(Exception): 
+        parse_asymmetry_parameters("[0.4, 0.3, 0.2, 0.1]; 3 4")
 
 
 ### TEST FOLDING FUNCTIONS ###
@@ -322,3 +338,36 @@ def test_backtrack():
     W, V = fold_rna("AAUCGUUCCGGU", parameters, assymetric_penalty_function, True, False, True)
 
     assert backtrack(W, V, parameters, "AAUCGUUCCGGU", assymetric_penalty_function, True, False, True) == '.((((...))))'
+
+def test_argparser():
+    """
+    Tests that the arguments parsed are handled appropiatly
+    """ 
+
+    #Other parameters
+    result = subprocess.Popen([sys.executable, "main.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-lp", "1988"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = result.communicate()
+    assert "Energy of optimal fold is -56.3 kcal/mol" in stdout.decode('utf-8')
+    assert "..(((((((((....((((((((..(((..((((..((.....))..))))..)))...))))))))..((((((...((.((((((((.....))))))))..)).))))))))))))))).." in stdout.decode('utf-8')
+    assert '' == stderr.decode('utf-8')
+
+    #With bulge stacking
+    result = subprocess.Popen([sys.executable, "main.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = result.communicate()
+    assert "Energy of optimal fold is -50.0 kcal/mol" in stdout.decode('utf-8')
+    assert "..(((((((((....((((((((........((((.....))))(((......)))...))))))))..(((((((..((.((((((((.....))))))))..)))))))))))))))))).." in stdout.decode('utf-8') 
+    assert '' == stderr.decode('utf-8')
+    
+    #Asymmetric
+    result = subprocess.Popen([sys.executable, "main.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-a", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = result.communicate()
+    assert "Energy of optimal fold is -49.6 kcal/mol" in stdout.decode('utf-8')
+    assert "..(((((((((....((((((((........((((.....))))(((......)))...))))))))..(((((((..((.((((((((.....))))))))..)))))))))))))))))).." in stdout.decode('utf-8')
+    assert '' == stderr.decode('utf-8')
+
+    #Other assymetry parameters
+    result = subprocess.Popen([sys.executable, "main.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-a", "-A", "[0.7, 0.6, 0.4, 0.2, 0.1]; 6", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = result.communicate()
+    assert '' == stderr.decode('utf-8')
+    assert "Energy of optimal fold is -49.5 kcal/mol" in stdout.decode('utf-8')
+    assert "..(((((((((....((((((((........((((.....))))(((......)))...))))))))..(((((((......(((((((.....)))))))(...))))))))))))))))).." in stdout.decode('utf-8') 
