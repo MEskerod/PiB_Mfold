@@ -5,13 +5,13 @@ from general import make_dir, generate_random_sequence, calculate_slice_lengths,
 def time_consumption(func_name: str, func, file_list):
     """
     """
-    print(f"FOLDING WITH {func_name.upper()}")
+    print(f"\nFOLDING WITH {func_name.upper()}")
     
-    output_dir = make_dir(os.path.join("..", "structures_example", func_name + "_structures")) #structures #NOTE - Change
+    output_dir = make_dir(os.path.join("..", "structures_test", func_name + "_structures")) #structures #NOTE - Change
     
     times = []
-    for file in file_list: 
-        print(f"Fold {file}")
+    for index, file in enumerate(file_list): 
+        print(f"Fold {file} - {index + 1}/{len(file_list)}")
         start_time = time.time()
         func(file, output_dir)
         times.append(time.time() - start_time)
@@ -34,7 +34,7 @@ def time_synthetic(n_sequences, min_length, max_length, func):
     func: The function that is used to fold the synthetic sequence
     """
     
-    print(f"FOLDING WITH SYNTHETIC SEQUENCES")
+    print(f"\nFOLDING WITH SYNTHETIC SEQUENCES")
 
     sequence = generate_random_sequence(max_length, ['A', 'C', 'G', 'U'])
     slices = calculate_slice_lengths(n_sequences, min_length, max_length)
@@ -48,7 +48,7 @@ def time_synthetic(n_sequences, min_length, max_length, func):
     for index, n in enumerate(slices): 
         lengths.append(len(sequence[:n]))
         write_fasta(sequence[:n], "sythetic sequence", temporary_fasta)
-        print(f"Fold slice {index}/{len(slices)}")
+        print(f"Fold sequence {index + 1}/{len(slices)}")
         start_time = time.time()
         func("temp.fasta", "") 
         times.append(time.time() - start_time)

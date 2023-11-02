@@ -51,8 +51,12 @@ def plot_distances(distance_dict: dict, key_label, output_file):
     #Format data
     data = [{key: distance_dict[key][n] for key in list(distance_dict.keys())} for n in range(len(distance_dict["length"]))]
 
+    def custom_sort_key(item):
+        return (item["type"] == 'other', item["type"], item["length"]) #To push the type other to the end
+
+    
     #Sort the data by type then by length
-    data.sort(key=lambda x: (x["type"], x["length"]))
+    data.sort(key=custom_sort_key)
 
     types = [d["type"] for d in data]
     lengths = [d["length"] for d in data]
@@ -64,7 +68,9 @@ def plot_distances(distance_dict: dict, key_label, output_file):
     unique_types, type_positions = np.unique(types, return_index=True)
     
     x = np.arange(len(data)) #Make locations for labels
-    width = 0.005 #Bar width
+    #width = 0.05 #Bar width #TODO - Change to be dependent on number of sequences and groups
+    width = 6.61/((len(key_label))*len(data))
+
     multiplier = 0
 
     fig, ax = plt.subplots(constrained_layout=True, figsize = (25, 12))
@@ -72,12 +78,12 @@ def plot_distances(distance_dict: dict, key_label, output_file):
     #Plot groups
     for label, distance in distances.items(): 
         offset = width * multiplier
-        ax.bar(x + offset, distance, width, label = label)
+        ax.bar(x + offset, distance, width, label = label, edgecolor = 'black', align='edge')
         multiplier += 1
 
     #Add vertical lines
     for position in type_positions[1:]: 
-        ax.axvline(x=position - 0.5, linestyle = '--')
+        ax.axvline(x=position, linestyle = '--')
 
     #Set xticks and rotate
     ax.set_xticks(x + width * (multiplier-1)/2, tick_labels)
@@ -87,10 +93,13 @@ def plot_distances(distance_dict: dict, key_label, output_file):
     ax.yaxis.set_major_formatter(ticker.StrMethodFormatter("{x:.2f}")) #Round y ticks to to decimal
     
     ax.legend(loc = 'upper left', bbox_to_anchor = (1.01, 1), fontsize = 16) #Set position of legend
-    ax.set_ylabel("f", fontsize = 22)
+    ax.set_ylabel("f1 score", fontsize = 22)
     
     #Add horizontal grid lines behind bars
     ax.set_axisbelow(True)
     ax.grid(axis='y', linestyle = '--') 
 
     plt.savefig(output_file)
+
+def plot_single_distance(): 
+    return

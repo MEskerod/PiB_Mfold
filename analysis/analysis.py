@@ -11,7 +11,7 @@ import os
 ### COLLECTING EVERYTHING INTO THE ACTUAL ANALYSIS ###
 def main():
     ### SETTING UP ###
-    file_list = get_path_list("../examples") #../sequences #NOTE - Change
+    file_list = get_path_list("../sequences")[:10] #../sequences #NOTE - Change
     os.makedirs("../results", exist_ok=True)
 
     #Get lenght and type for seuences
@@ -23,7 +23,7 @@ def main():
                       "NewestMfold": run_Mfold_newest, 
                       "MfoldWebversion": run_Mfold_web, 
                       "Nussinov": run_Nussinov}
-    
+
     
     #Generate times for all functions
     time_dict = run_functions_time(func_time_real, file_list) #Time for real data
@@ -33,7 +33,7 @@ def main():
     write_csv(time_dict, "../results/time_table.csv")
 
     #Find time for synthetic seuences and add to time_dict #NOTE - Uncomment
-    synthetic_time, synthethic_lengths = time_synthetic(5, 20, 50, run_Mfold_newest)
+    synthetic_time, synthethic_lengths = time_synthetic(10, 100, 120, run_Mfold_newest)
     synthetic_dict = {"NewestMfoldSynthetic": synthetic_time, "Length": synthethic_lengths}
     write_csv(synthetic_dict, "../results/syntethic_times.csv")
 
@@ -41,22 +41,26 @@ def main():
 
     ### CALCULATE DISTANCES BETWEEN STRUCTURES ###
     #Get a list of all the folders with structures: 
-    folders = [os.path.join("../structures_example", subdir) for subdir in os.listdir("../structures_example")] #../structures #NOTE - Change
+    folders = [os.path.join("../structures_test", subdir) for subdir in os.listdir("../structures_test")] #../structures #NOTE - Change
 
     #Check content 
-    for folder in folders: 
-        check_files("../examples", folder) #../sequences #NOTE - Change
+    print("\nCHECKING FILES")
+    #for folder in folders: 
+    #    check_files("../examples", folder) #../sequences #NOTE - Change
 
 
     #Compare all to each other and save to .csv to be used later if needed
     #TODO - Change distance to take care of other types of brackets!
+    print("\nCALCULATE DISTANCES")
     distance_dict = Fdistances(folders)
     distance_dict["length"] = lengths
     distance_dict ["type"] = types
     write_csv(distance_dict, "../results/distance_table.csv")
 
     ### MAKE PLOTS ###
-    plot_synthetic_real_times(synthethic_lengths, lengths, synthetic_time, time_dict["NewestMfold"], "../results") #NOTE - Change times!!!
+    #TODO - ADD MORE PLOTS!
+    print("\nMAKE PLOTS")
+    plot_synthetic_real_times(synthethic_lengths, lengths, synthetic_time, time_dict["NewestMfold"], "../results") 
     plot_MfoldOriginal_newest(lengths, time_dict["OriginalMfold"], time_dict["NewestMfold"], "../results")
     plot_Nussinov(lengths, time_dict["Nussinov"], "../results")
 
