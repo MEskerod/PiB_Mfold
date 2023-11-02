@@ -1,10 +1,14 @@
-import os, argparse
+import os
 import matplotlib.pyplot as plt
 from itertools import combinations
 
 from general import get_path_list, read_dbn_file
 
 def distance(structure1, structure2): 
+    """
+    """
+    brackets = ['(', ')', '[', ']', '{', '}', '<', '>']
+    
     true_positive = 0
     true_negative = 0
     false_positive = 0
@@ -14,8 +18,8 @@ def distance(structure1, structure2):
         raise ValueError("Structures must have same length")
 
     for n in range(len(structure1)): 
-        s1 = 1 if structure1[n] in '()' else 0
-        s2 = 1 if structure2[n] in '()' else 0
+        s1 = 1 if structure1[n] in brackets else 0
+        s2 = 1 if structure2[n] in brackets else 0
 
         if s1 == 1 and s2 == 1: 
             true_positive += 1
@@ -66,6 +70,9 @@ def distances(dir1, dir2):
 def Fdistances(folders): 
     """
     """
+    #TODO - Check order of folders! The order of the folders are important!
+    #Maybe change combinations to get all(!!!) combinations
+    
     distance_dict = {}
     
     folder_combinations = list(combinations(folders, 2))
