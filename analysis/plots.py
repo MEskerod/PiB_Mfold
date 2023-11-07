@@ -1,27 +1,34 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+from matplotlib.lines import Line2D
 import os
 import numpy as np
 
 ### PLOT FUNCTIONS ###
 def plot_synthetic_real_times(synthethic_lengths, real_lengths, synthetic_time, real_time, output_path):
     """
-    Running time is plotted as a function of sequence length
+    Running time is plotted as a function of sequence length, for synthethic sequences vs real sequences
     """
-
     plt.figure()
-    plt.scatter(real_lengths, real_time, label = "Real RNA sequences", s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
+    handles = [] #For adding descriptions to legend (lines wth markers)
+    
+    plt.scatter(real_lengths, real_time, s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
     plt.plot(real_lengths, real_time, color = 'blue', linestyle = '--', linewidth = 0.8)
-    plt.scatter(synthethic_lengths, synthetic_time, label = "Synthetic sequences", s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
+    handles.append(Line2D([0], [0], color = 'blue', linestyle='--', marker='o', markerfacecolor=None, markeredgecolor='blue', label = "Real RNA sequences"))
+
+    plt.scatter(synthethic_lengths, synthetic_time, s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
     plt.plot(synthethic_lengths, synthetic_time, color = 'red', linestyle = '--', linewidth = 0.8)
+    handles.append(Line2D([0], [0], color='red', linestyle='--', marker='o', markerfacecolor=None, markeredgecolor='red', label = "Synthetic sequences"))
+
     plt.ylabel("Running time (s)")
     plt.xlabel("Sequence length")
-    plt.legend()
+    plt.legend(handles=handles)
     plt.grid(True, linestyle = '--')
     plt.savefig(os.path.join(output_path, "synthetic_vs_real_times.jpeg"))
 
 def plot_Nussinov(lengths, time, output_path): 
     """
+    Running time is plotted as a function of sequence length for Nussinov algorithm
     """
     plt.figure()
     plt.scatter(lengths, time, s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
@@ -34,20 +41,32 @@ def plot_Nussinov(lengths, time, output_path):
 
 def plot_MfoldOriginal_newest(lengths, original_time, newest_time, output_path): 
     """
+    Running time is plotted as a function of sequence length for newest implemented version of Mfold compared to the original
     """
     plt.figure()
-    plt.scatter(lengths, original_time, label = "Original Mfold", s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
+    handles = [] #For adding descriptions to legend (lines wth markers)
+
+    plt.scatter(lengths, original_time, s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
     plt.plot(lengths, original_time, color = 'blue', linestyle = '--', linewidth = 0.8)
-    plt.scatter(lengths, newest_time, label = "Mfold with improvements", s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
+    handles.append(Line2D([0], [0], color = 'blue', linestyle='--', marker='o', markerfacecolor=None, markeredgecolor='blue', label = "Original Mfold"))
+
+    plt.scatter(lengths, newest_time, s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
     plt.plot(lengths, newest_time, color = 'red', linestyle = '--', linewidth = 0.8)
+    handles.append(Line2D([0], [0], color='red', linestyle='--', marker='o', markerfacecolor=None, markeredgecolor='red', label = "Mfold with improvements"))
+
     plt.ylabel("Running time (s)")
     plt.xlabel("Sequence length")
-    plt.legend()
+    plt.legend(handles = handles)
     plt.grid(True, linestyle = '--')
     plt.savefig(os.path.join(output_path, "original_vs_new_times.jpeg"))
     return
 
 def plot_distances(distance_dict: dict, key_label, output_file):
+    """
+    Distances are plotted as bar plot. 
+    Distances for same sequence are groupped together. 
+    The sequences are sorted according to type and then length
+    """
     #Format data
     data = [{key: distance_dict[key][n] for key in list(distance_dict.keys())} for n in range(len(distance_dict["length"]))]
 
@@ -68,7 +87,6 @@ def plot_distances(distance_dict: dict, key_label, output_file):
     unique_types, type_positions = np.unique(types, return_index=True)
     
     x = np.arange(len(data)) #Make locations for labels
-    #width = 0.05 #Bar width #TODO - Change to be dependent on number of sequences and groups
     width = 6.61/((len(key_label))*len(data))
 
     multiplier = 0
