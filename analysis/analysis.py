@@ -5,7 +5,7 @@ from confusion_distance import Fdistances
 from check_files import check_files
 from plots import plot_synthetic_real_times, plot_Nussinov, plot_MfoldOriginal_newest, plot_distances
 
-import os
+import os, sys
 
 
 ### COLLECTING EVERYTHING INTO THE ACTUAL ANALYSIS ###
@@ -41,23 +41,23 @@ def main():
 
     ### CALCULATE DISTANCES BETWEEN STRUCTURES ###
     #Get a list of all the folders with structures: 
-    folders = [os.path.join("../structures", subdir) for subdir in os.listdir("../structures_test")]
+    folders = [os.path.join("../structures", subdir) for subdir in os.listdir("../structures")]
 
     #Check content 
-    print("\nCHECKING FILES")
+    print("\nCHECKING FILES", file=sys.stderr)
     for folder in folders: 
         check_files("../sequences", folder) 
 
 
     #Compare all to each other and save to .csv to be used later if needed
-    print("\nCALCULATE DISTANCES")
+    print("\nCALCULATE DISTANCES", file=sys.stderr)
     distance_dict = Fdistances(folders)
     distance_dict["length"] = lengths
     distance_dict ["type"] = types
     write_csv(distance_dict, "../results/distance_table.csv")
 
     ### MAKE PLOTS ###
-    print("\nMAKE PLOTS")
+    print("\nMAKE PLOTS", file=sys.stderr)
     plot_synthetic_real_times(synthethic_lengths, lengths, synthetic_time, time_dict["NewestMfold"], "../results") 
     plot_MfoldOriginal_newest(lengths, time_dict["OriginalMfold"], time_dict["NewestMfold"], "../results")
     plot_Nussinov(lengths, time_dict["Nussinov"], "../results")
