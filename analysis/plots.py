@@ -14,11 +14,11 @@ def plot_synthetic_real_times(synthethic_lengths, real_lengths, synthetic_time, 
     
     plt.scatter(real_lengths, real_time, s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
     plt.plot(real_lengths, real_time, color = 'blue', linestyle = '--', linewidth = 0.8)
-    handles.append(Line2D([0], [0], color = 'blue', linestyle='--', marker='o', markerfacecolor=None, markeredgecolor='blue', label = "Real RNA sequences"))
+    handles.append(Line2D([0], [0], color = 'blue', linestyle='--', linewidth=0.8, marker='o', markerfacecolor='none', markeredgecolor='blue', label = "Real RNA sequences"))
 
     plt.scatter(synthethic_lengths, synthetic_time, s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
     plt.plot(synthethic_lengths, synthetic_time, color = 'red', linestyle = '--', linewidth = 0.8)
-    handles.append(Line2D([0], [0], color='red', linestyle='--', marker='o', markerfacecolor=None, markeredgecolor='red', label = "Synthetic sequences"))
+    handles.append(Line2D([0], [0], color='red', linestyle='--', linewidth=0.8, marker='o', markerfacecolor='none', markeredgecolor='red', label = "Synthetic sequences"))
 
     plt.ylabel("Running time (s)")
     plt.xlabel("Sequence length")
@@ -48,11 +48,11 @@ def plot_MfoldOriginal_newest(lengths, original_time, newest_time, output_path):
 
     plt.scatter(lengths, original_time, s=20, edgecolors='blue', facecolors = 'none', linewidths=1)
     plt.plot(lengths, original_time, color = 'blue', linestyle = '--', linewidth = 0.8)
-    handles.append(Line2D([0], [0], color = 'blue', linestyle='--', marker='o', markerfacecolor=None, markeredgecolor='blue', label = "Original Mfold"))
+    handles.append(Line2D([0], [0], color = 'blue', linestyle='--', linewidth=0.8, marker='o', markerfacecolor='none', markeredgecolor='blue', label = "Original Mfold"))
 
     plt.scatter(lengths, newest_time, s=20, edgecolors= 'red', facecolors = 'none', linewidths=1)
     plt.plot(lengths, newest_time, color = 'red', linestyle = '--', linewidth = 0.8)
-    handles.append(Line2D([0], [0], color='red', linestyle='--', marker='o', markerfacecolor=None, markeredgecolor='red', label = "Mfold with improvements"))
+    handles.append(Line2D([0], [0], color='red', linestyle='--', linewidth=0.8, marker='o', markerfacecolor='none', markeredgecolor='red', label = "Mfold with improvements"))
 
     plt.ylabel("Running time (s)")
     plt.xlabel("Sequence length")
