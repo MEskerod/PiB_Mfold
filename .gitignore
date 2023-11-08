@@ -1,0 +1,10 @@
+#Created by user
+structures_test/*
+
+#Caches
+*/__pycache__/*
+__pycache__/*
+
+#GWF
+.gwf/*
+
