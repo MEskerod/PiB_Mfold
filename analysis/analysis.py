@@ -20,8 +20,7 @@ def main():
     ### TIME FOR ALGORITHMS ###
     #Generate time for all and save to .csv. Plotd an be generated or changed later
     func_time_real = {"OriginalMfold": run_Mfold_orginal, 
-                      "NewestMfold": run_Mfold_newest, 
-                      "MfoldWebversion": run_Mfold_web, 
+                      "NewestMfold": run_Mfold_newest,  
                       "Nussinov": run_Nussinov}
 
     
