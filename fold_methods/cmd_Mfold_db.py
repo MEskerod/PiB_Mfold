@@ -1,4 +1,5 @@
 from io import TextIOWrapper
+from Bio import SeqIO
 import argparse, subprocess, os
 
 def run_Mfold(filename): 
@@ -28,6 +29,19 @@ def read_ct(file) -> tuple():
             pairs.append((int(lines[n][0])-1, int(lines[n][4])-1)) #The files start indexing from 1
 
     return sequence, pairs
+
+def sequence_pair_from_fasta(file): 
+    """
+    Reads in a FASTA-file and returns the sequence
+    If there is more than one sequence in the FASTA file it gives an error
+    It returns the sequence and an empty list representing the possible pairs
+    """
+    records = list(SeqIO.parse(file, 'fasta'))
+    
+    if len(records) > 1: 
+        raise ValueError("FASTA file contains more than one sequence")
+    
+    return str(records[0].seq), []
 
 def remove_files(filename): 
     """
@@ -74,7 +88,10 @@ def main():
     basename = os.path.splitext(os.path.basename(file))[0]
     ct_file = basename + '.ct'
 
-    sequence, pairs = read_ct(ct_file) 
+    if os.path.exists(ct_file):
+        sequence, pairs = read_ct(ct_file) 
+    else: 
+        sequence, pairs = sequence_pair_from_fasta(file)
 
     remove_files(file)
 
