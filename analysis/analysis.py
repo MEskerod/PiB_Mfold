@@ -11,7 +11,7 @@ import os
 ### COLLECTING EVERYTHING INTO THE ACTUAL ANALYSIS ###
 def main():
     ### SETTING UP ###
-    file_list = get_path_list("../sequences")[:10] #../sequences #NOTE - Change
+    file_list = get_path_list("../sequences")
     os.makedirs("../results", exist_ok=True)
 
     #Get lenght and type for seuences
@@ -32,8 +32,8 @@ def main():
     #Save times to .csv
     write_csv(time_dict, "../results/time_table.csv")
 
-    #Find time for synthetic seuences and add to time_dict #NOTE - Uncomment
-    synthetic_time, synthethic_lengths = time_synthetic(10, 100, 120, run_Mfold_newest)
+    #Find time for synthetic seuences and add to time_dict 
+    synthetic_time, synthethic_lengths = time_synthetic(40, 60, 800, run_Mfold_newest)
     synthetic_dict = {"NewestMfoldSynthetic": synthetic_time, "Length": synthethic_lengths}
     write_csv(synthetic_dict, "../results/syntethic_times.csv")
 
@@ -41,16 +41,15 @@ def main():
 
     ### CALCULATE DISTANCES BETWEEN STRUCTURES ###
     #Get a list of all the folders with structures: 
-    folders = [os.path.join("../structures_test", subdir) for subdir in os.listdir("../structures_test")] #../structures #NOTE - Change
+    folders = [os.path.join("../structures", subdir) for subdir in os.listdir("../structures_test")]
 
     #Check content 
     print("\nCHECKING FILES")
-    #for folder in folders: 
-    #    check_files("../examples", folder) #../sequences #NOTE - Change
+    for folder in folders: 
+        check_files("../sequences", folder) 
 
 
     #Compare all to each other and save to .csv to be used later if needed
-    #TODO - Change distance to take care of other types of brackets!
     print("\nCALCULATE DISTANCES")
     distance_dict = Fdistances(folders)
     distance_dict["length"] = lengths
@@ -58,28 +57,23 @@ def main():
     write_csv(distance_dict, "../results/distance_table.csv")
 
     ### MAKE PLOTS ###
-    #TODO - ADD MORE PLOTS!
     print("\nMAKE PLOTS")
     plot_synthetic_real_times(synthethic_lengths, lengths, synthetic_time, time_dict["NewestMfold"], "../results") 
     plot_MfoldOriginal_newest(lengths, time_dict["OriginalMfold"], time_dict["NewestMfold"], "../results")
     plot_Nussinov(lengths, time_dict["Nussinov"], "../results")
 
-    distances_to_plot1 = [("NewestMfold_true", "Newest version"), ("OriginalMfold_true", "Original version"), ("MfoldWebversion_true", "Mfold web"), ("Nussinov_true", "Nussinov")]
+    distances_to_plot1 = [("true_NewestMfold", "Newest version"), ("true_OriginalMfold", "Original version"), ("true_MfoldWebversion", "Mfold web"), ("true_Nussinov", "Nussinov")]
     plot_distance_dict1 = {key[0]: distance_dict[key[0]] for key in distances_to_plot1}
     plot_distance_dict1["length"] = lengths
     plot_distance_dict1["type"] = types
 
-    distances_to_plot2 = [("NewestMfold_OriginalMfold", "Original version"), ("MfoldWebversion_NewestMfold", "Mfold web"), ("NewestMfold_Nussinov", "Nussinov")]
+    distances_to_plot2 = [("NewestMfold_OriginalMfold", "Original version"), ("NewestMfold_MfoldWebversion", "Mfold web"), ("NewestMfold_Nussinov", "Nussinov")]
     plot_distance_dict2 = {key[0]: distance_dict[key[0]] for key in distances_to_plot2}
     plot_distance_dict2["length"] = lengths
     plot_distance_dict2["type"] = types
 
     plot_distances(plot_distance_dict1, distances_to_plot1, "../results/distances_true.jpeg")
     plot_distances(plot_distance_dict2, distances_to_plot2, "../results/distances_newest.jpeg")
-    
-    #TODO - Find out if we want more distance comparisons
-
-    #FIXME - Before running!!! Change paths! And check for paths in other files! (time_functions)
 
 
 if __name__ == '__main__': 

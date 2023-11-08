@@ -1,6 +1,6 @@
 import os
 import matplotlib.pyplot as plt
-from itertools import combinations
+from itertools import permutations
 
 from general import get_path_list, read_dbn_file
 
@@ -52,10 +52,10 @@ def calculate_F(file1, file2):
 
 def distances(dir1, dir2): 
     
-    structures1 = get_path_list(dir2)
+    structures1 = get_path_list(dir1)
     
     
-    structures2 = get_path_list(dir1)
+    structures2 = get_path_list(dir2)
     
     Fs = []
 
@@ -69,13 +69,11 @@ def distances(dir1, dir2):
 
 def Fdistances(folders): 
     """
+
     """
-    #TODO - Check order of folders! The order of the folders are important!
-    #Maybe change combinations to get all(!!!) combinations
-    
     distance_dict = {}
     
-    folder_combinations = list(combinations(folders, 2))
+    folder_combinations = list(permutations(folders, 2)) #Permutations will give all possible combination
 
     for combination in folder_combinations: 
         folder1 = os.path.basename(combination[0]).split('_')[0]
