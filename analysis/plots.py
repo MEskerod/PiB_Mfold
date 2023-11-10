@@ -81,13 +81,13 @@ def plot_distances(distance_dict: dict, key_label, output_file):
     lengths = [d["length"] for d in data]
     distances = {key[1]: [d[key[0]] for d in data] for key in key_label}
 
-    tick_labels = [f"{types[n]}_{lengths[n]}" for n in range(len(data))]
+    tick_labels = [f"{types[n]}, {lengths[n]} n" for n in range(len(data))]
 
     #Get unique RNA types and their position
     unique_types, type_positions = np.unique(types, return_index=True)
     
     x = np.arange(len(data)) #Make locations for labels
-    width = 6.61/((len(key_label))*len(data))
+    width = 6.61/len(data)
 
     multiplier = 0
 

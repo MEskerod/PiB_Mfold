@@ -1,4 +1,4 @@
-from general import get_path_list, write_csv, get_len_and_type
+from general import get_path_list, write_csv, get_len_and_type, read_csv
 from running_fold import run_Mfold_web, run_Mfold_orginal, run_Mfold_newest, run_Nussinov
 from time_functions import run_functions_time, time_synthetic
 from confusion_distance import Fdistances
@@ -12,7 +12,8 @@ import os, sys
 def main():
     ### SETTING UP ###
     file_list = get_path_list("../sequences")
-    os.makedirs("../results", exist_ok=True)
+   
+    #os.makedirs("../results", exist_ok=True)
 
     #Get lenght and type for seuences
     lengths, types = get_len_and_type(file_list)
@@ -32,11 +33,13 @@ def main():
     write_csv(time_dict, "../results/time_table.csv")
 
     #Find time for synthetic seuences and add to time_dict 
-    synthetic_time, synthethic_lengths = time_synthetic(40, 60, 800, run_Mfold_newest)
-    synthetic_dict = {"NewestMfoldSynthetic": synthetic_time, "Length": synthethic_lengths}
+    synthetic_time, synthetic_lengths = time_synthetic(40, 60, 800, run_Mfold_newest)
+    synthetic_dict = {"NewestMfoldSynthetic": synthetic_time, "Length": synthetic_lengths}
     write_csv(synthetic_dict, "../results/syntethic_times.csv")
 
-    
+    #FOR RE-LOADING DICTIONARIES
+    #synthetic_dict = read_csv("../results/syntethic_times.csv")
+    #time_dict = read_csv("../results/time_table.csv")
 
     ### CALCULATE DISTANCES BETWEEN STRUCTURES ###
     #Get a list of all the folders with structures: 
@@ -57,16 +60,16 @@ def main():
 
     ### MAKE PLOTS ###
     print("\nMAKE PLOTS", file=sys.stderr)
-    plot_synthetic_real_times(synthethic_lengths, lengths, synthetic_time, time_dict["NewestMfold"], "../results") 
-    plot_MfoldOriginal_newest(lengths, time_dict["OriginalMfold"], time_dict["NewestMfold"], "../results")
-    plot_Nussinov(lengths, time_dict["Nussinov"], "../results")
+    plot_synthetic_real_times(synthetic_dict["Length"], time_dict["Length"], synthetic_dict["NewestMfoldSynthetic"], time_dict["NewestMfold"], "../results") 
+    plot_MfoldOriginal_newest(time_dict["Length"], time_dict["OriginalMfold"], time_dict["NewestMfold"], "../results")
+    plot_Nussinov(time_dict["Length"], time_dict["Nussinov"], "../results")
 
-    distances_to_plot1 = [("true_NewestMfold", "Newest version"), ("true_OriginalMfold", "Original version"), ("true_MfoldWebversion", "Mfold web"), ("true_Nussinov", "Nussinov")]
+    distances_to_plot1 = [("true_NewestMfold", "Newest version"), ("true_OriginalMfold", "Original version"), ("true_Nussinov", "Nussinov"), ("true_MfoldWebversion", "Mfold web")]
     plot_distance_dict1 = {key[0]: distance_dict[key[0]] for key in distances_to_plot1}
     plot_distance_dict1["length"] = lengths
     plot_distance_dict1["type"] = types
 
-    distances_to_plot2 = [("NewestMfold_OriginalMfold", "Original version"), ("NewestMfold_MfoldWebversion", "Mfold web"), ("NewestMfold_Nussinov", "Nussinov")]
+    distances_to_plot2 = [("NewestMfold_OriginalMfold", "Original version"), ("NewestMfold_Nussinov", "Nussinov"), ("NewestMfold_MfoldWebversion", "Mfold web")]
     plot_distance_dict2 = {key[0]: distance_dict[key[0]] for key in distances_to_plot2}
     plot_distance_dict2["length"] = lengths
     plot_distance_dict2["type"] = types

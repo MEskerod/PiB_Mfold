@@ -1,4 +1,4 @@
-import os
+import os, sys
 from Bio import SeqIO
 
 from general import read_dbn_file, read_fasta
@@ -36,6 +36,8 @@ def check_content(file_names, sequences_path, structures_path):
 def check_files(sequence_path, structures_path):
     filelist1 = get_path_list(sequence_path)
     filelist2 = get_path_list(structures_path)
+
+    print(f"Cheking {sequence_path} and {structures_path}", file=sys.stderr)
 
     check_file_lists(filelist1, filelist2)
 

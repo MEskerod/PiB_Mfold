@@ -32,11 +32,14 @@ def distance(structure1, structure2):
     
     return {"TP": true_positive, "FP": false_positive, "TN": true_negative, "FN": false_negative}
 
-def F_score(CM: dict):
-    precision = CM["TP"]/(CM["TP"]+CM["FP"])
-    recall = CM["TP"]/(CM["TP"]+CM["FN"])
+def F_score(CM: dict, epsilon=1e-7):
+    """
+    epsilon is added to avoid division by zero
+    """
+    precision = CM["TP"]/(CM["TP"]+CM["FP"]+epsilon)
+    recall = CM["TP"]/(CM["TP"]+CM["FN"]+epsilon)
 
-    F = 2 * (precision*recall)/(precision+recall)
+    F = 2 * (precision*recall)/(precision+recall+epsilon)
 
     return F
 

@@ -12,7 +12,7 @@ def get_path_list(dir_name):
     Makes a list of all the files in the given directory. 
     Returns a list of "dir_name/file_name"
     """
-    file_names = [os.path.join(dir_name, name) for name in os.listdir(dir_name)]
+    file_names = [os.path.join(dir_name, name) for name in sorted(os.listdir(dir_name), key=lambda x:int(x.split('_')[0]))]
     return file_names
 
 
@@ -23,6 +23,14 @@ def write_csv(data, output_file):
     """
     df = pd.DataFrame(data)
     df.to_csv(output_file, index=False)
+
+def read_csv(input_file): 
+    """
+    Reads a .csv file and returns the data as a dictionary
+    """
+    df = pd.read_csv(input_file)
+    data_dict = df.to_dict(orient='list')
+    return data_dict
 
 def write_fasta(sequence, seq_id, file_name):
     """
