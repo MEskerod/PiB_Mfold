@@ -1,4 +1,4 @@
-import subprocess, os
+import subprocess, os, sys
 
 ### FUNCTIONS FOR DIFFERENT PROGRAMS ###
 """
@@ -14,9 +14,9 @@ def run_Mfold_web(file, outdir):
     p.wait()
 
     if p.returncode != 0:
-        print(f"Command failed for Mfold Web for {file} with return code {p.returncode}")
-        print("Error output:")
-        print(p.stderr.read().decode('utf-8'))
+        print(f"Command failed for Mfold Web for {file} with return code {p.returncode}", file = sys.stderr)
+        print("Error output:", file = sys.stderr)
+        print(p.stderr.read().decode('utf-8'), file = sys.stderr)
 
 
 def run_Mfold_orginal(file, outdir):
@@ -28,9 +28,9 @@ def run_Mfold_orginal(file, outdir):
     p.wait()
 
     if p.returncode != 0:
-        print(f"Command failed for Mfold original for {file} with return code {p.returncode}")
-        print("Error output:")
-        print(p.stderr.read().decode('utf-8'))
+        print(f"Command failed for Mfold original for {file} with return code {p.returncode}", file = sys.stderr)
+        print("Error output:", file = sys.stderr)
+        print(p.stderr.read().decode('utf-8'), file = sys.stderr)
 
 def run_Mfold_newest(file, outdir): 
     """
@@ -41,9 +41,9 @@ def run_Mfold_newest(file, outdir):
     p.wait()
 
     if p.returncode != 0:
-        print(f"Command failed for newest version of Mfold for {file} with return code {p.returncode}")
-        print("Error output:")
-        print(p.stderr.read().decode('utf-8'))
+        print(f"Command failed for newest version of Mfold for {file} with return code {p.returncode}", file = sys.stderr)
+        print("Error output:", file = sys.stderr)
+        print(p.stderr.read().decode('utf-8'), file = sys.stderr)
 
 def run_Nussinov(file, outdir): 
     """
@@ -54,6 +54,6 @@ def run_Nussinov(file, outdir):
     p.wait()
 
     if p.returncode != 0:
-        print(f"Command failed for Nussinov for {file} with return code {p.returncode}")
-        print("Error output:")
-        print(p.stderr.read().decode('utf-8'))
+        print(f"Command failed for Nussinov for {file} with return code {p.returncode}", file = sys.stderr)
+        print("Error output:", file = sys.stderr)
+        print(p.stderr.read().decode('utf-8'), file = sys.stderr)
