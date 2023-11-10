@@ -13,7 +13,7 @@ def main():
     ### SETTING UP ###
     file_list = get_path_list("../sequences")
    
-    #os.makedirs("../results", exist_ok=True)
+    os.makedirs("../results", exist_ok=True)
 
     #Get lenght and type for seuences
     lengths, types = get_len_and_type(file_list)
