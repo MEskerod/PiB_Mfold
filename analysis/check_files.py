@@ -7,7 +7,7 @@ from general import read_dbn_file, read_fasta
 def get_path_list(dir_name): 
     """
     """
-    file_names = [os.path.splitext(name)[0] for name in os.listdir(dir_name)]
+    file_names = [os.path.splitext(name)[0] for name in sorted(os.listdir(dir_name), key=lambda x:int(x.split('_')[0]))]
     return file_names
 
 #####################
@@ -46,10 +46,12 @@ def check_files(sequence_path, structures_path):
 
 
 def main(): 
+    arguments = sys.argv[1:]
     sequence_path = "../sequences"
-    structures_path = "../structures/true_structures"
+    for arg in arguments:
+        structures_path = "../structures/" + str(arg)
 
-    check_files(sequence_path, structures_path)
+        check_files(sequence_path, structures_path)
 
 
 if __name__ == "__main__": 
