@@ -4,10 +4,14 @@ from Bio import SeqIO
 from general import read_dbn_file, read_fasta
 
 
+def costum_sort(name: str): 
+    components = name.split('_')
+    return (int(components[0]), components[1], components[2])
+
 def get_path_list(dir_name): 
     """
     """
-    file_names = [os.path.splitext(name)[0] for name in sorted(os.listdir(dir_name), key=lambda x:int(x.split('_')[0]))]
+    file_names = sorted([os.path.splitext(name)[0] for name in os.listdir(dir_name)], key=lambda x: (int(x.split('_')[0]), x.split('_')[1], x.split('_')[2]))
     return file_names
 
 #####################

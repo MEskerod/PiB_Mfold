@@ -12,7 +12,7 @@ def get_path_list(dir_name):
     Makes a list of all the files in the given directory. 
     Returns a list of "dir_name/file_name"
     """
-    file_names = [os.path.join(dir_name, name) for name in sorted(os.listdir(dir_name), key=lambda x:int(x.split('_')[0]))]
+    file_names = [os.path.join(dir_name, name) for name in sorted(os.listdir(dir_name), key=lambda x:(int(x.split('_')[0]), x.split('_')[1], x.split('_')[2]))]
     return file_names
 
 
