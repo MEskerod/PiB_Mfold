@@ -8,7 +8,7 @@ gwf = Workflow()
 def analysis(): 
     inputs = []
     outputs = [os.path.join("results", "time_table.csv"),
-               os.path.join("results", "synthethic_times.csv"),
+               os.path.join("results", "syntethic_times.csv"),
                os.path.join("results", "distance_table.csv"),
                os.path.join("results", "distances_newest.jpeg"),
                os.path.join("results", "distances_true.jpeg"),
