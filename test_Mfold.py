@@ -2,7 +2,9 @@ import pytest
 import numpy as np
 from io import StringIO
 
-from Mfold import(
+import importlib
+
+from Mfold_original import(
     read_fasta,
     prepare_input,
     read_parameters,
@@ -19,6 +21,11 @@ from Mfold import(
     find_optimal,
     backtrack
 )
+
+parameters = read_parameters("loop.csv", "pairing.csv")
+
+global basepairs
+basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
 
 def test_read_fasta(): 
     """
@@ -49,42 +56,39 @@ def test_loop_greater_10():
     """
     Tests that the correct value is calculated for loops of sizes greater than 10
     """
-    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+    #loop, stack = read_parameters("loop.csv", "pairing.csv")
     
-    IL = [6.35, 6.76, 7.05, 7.28, 7.47]
-    BL =[5.65, 6.05, 6.35, 6.58, 6.77]
-    HL = [6.02, 6.42, 6.71, 6.94, 7.13]
+    IL = [3.70, 4.11, 4.40, 4.63, 4.82]
+    BL =[11.10, 11.51, 11.80, 12.03, 12.22]
+    HL = [4.40, 4.81, 5.10, 5.33, 5.52]
 
     sizes = [11, 16, 21, 26, 31]
 
     for n in range(5): 
-        assert round(loop_greater_10("IL", sizes[n], loop),2) == IL[n]
-        assert round(loop_greater_10("BL", sizes[n], loop),2) == BL[n]
-        assert round(loop_greater_10("HL", sizes[n], loop),2) == HL[n]
+        assert round(loop_greater_10("IL", sizes[n]),2) == IL[n]
+        assert round(loop_greater_10("BL", sizes[n]),2) == BL[n]
+        assert round(loop_greater_10("HL", sizes[n]),2) == HL[n]
 
 def test_E1(): 
     """
     The energy of a hairpin loop should corespond to the size of the loop 
     If size >10 the energy should be caculated
     """
-    parameters = [4.5,5.5,4.9,5.1,5.2,5.5,5.8,5.9]
+    energies = [7.4, 5.9, 4.4, 4.3, 4.1, 4.1, 4.2, 4.3]
     
-    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
     i = 0 
     for n in range(8): 
         j = n+4
-        assert find_E1(i, j, loop) == parameters[n] 
+        assert find_E1(i, j) == energies[n] 
 
     for j in range(12,32,5): 
-        assert find_E1(i, j, loop) == round(loop_greater_10("HL", j-i-1, loop), 5)
+        assert find_E1(i, j) == round(loop_greater_10("HL", j-i-1), 5)
 
 def test_stacking(): 
     """
     Tests that looking up base pairs in the table returns the correct value
     Furthermore tests that the value added is V[i+1, j-1]
     """
-    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
-    
     V = np.array([[1,1,1,1],[1,1,0,1], [1,1,1,1], [1,1,1,1]])
 
 
@@ -110,94 +114,91 @@ def test_stacking():
     i, j = 0, 3
 
     for n in range(14): 
-        for sequence in pairs[n]: 
-           assert round(stacking(i, j, V, stack, sequence),2) == scores[n] 
+        for s in pairs[n]: 
+           global sequence
+           sequence = s
+           prepare_input(sequence)
+           assert round(stacking(i, j, V), 2) == scores[n] 
 
 def test_bulgeloop_i(): 
     """
     Tests that bulge loops on the 5' end of size 2-10 returns the correct value
     """
-    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
-    
     V = np.full((34,34), float('inf'))
     V[11, :] = 0
 
+    global sequence
     sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
+    prepare_input(sequence)
 
     i_list, j_list = [x for x in range(8)], [x for x in range(33, 25, -1)]
     
     for n in range(8): 
         i, j = i_list[n], j_list[n]
-        assert bulge_loop_5end(i, j, V, loop, stack, sequence) == (loop.at[10-i, "BL"], 11)
+        assert bulge_loop_5end(i, j, V) == (parameters[0].at[10-i, "BL"], 11)
 
 def test_bulgelopp_j():
     """
     Tests that bulge loops on the 3' end of size 2-10 returns the correct value
     """
-    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
-    
     V = np.full((34,34), float('inf'))
     V[:, 22] = 0
 
+    global sequence
     sequence = 'AAAAAAAAAAAAAAAAAUUUUUUUUUUUUUUUUU'
+    prepare_input(sequence)
 
     i_list, j_list = [x for x in range(8)], [x for x in range(33, 25, -1)]
     
     for n in range(8): 
         i, j = i_list[n], j_list[n]
-        assert bulge_loop_3end(i, j, V, loop, stack, sequence) == (loop.at[10-i, "BL"], 22)
+        assert bulge_loop_3end(i, j, V) == (parameters[0].at[10-i, "BL"], 22)
 
 def test_bulgeloop_size1(): 
     """
     Tests that bulge loops of size 1 returns the loop parameter, stacking parameter and V[i-2, j-1]/V[i-1, j-2]
     """
-    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
-
     V = np.full((10,10), float('inf'))
     V[2, 8], V[2, 6] = 0, 0
 
     sequences = ['AAAAAUUUUU', 'CCCCCGGGGG', 'UUUUUGGGGG']
 
     #Bulge on i
-    i, j = 0, 9
-
-    for sequence in sequences: 
-        bp = sequence[i] + sequence[j]
-        assert bulge_loop_5end(i, j, V, loop, stack, sequence) == (loop.at[1, "BL"] + stack.at[bp, bp], i+2)
-    
+    ii, ji = 0, 9
     #Bulge on j
-    i, j = 1, 8
+    ij, jj = 1, 8
 
-    for sequence in sequences: 
-        bp = sequence[i] + sequence[j]
-        assert bulge_loop_3end(i, j, V, loop, stack, sequence) == (loop.at[1, "BL"] + stack.at[bp, bp], j-2)
+    for s in sequences: 
+        global sequence
+        sequence = s
+        prepare_input(s)
+        assert bulge_loop_5end(ii, ji, V) == (parameters[0].at[1, "BL"], ii+2)
+        assert bulge_loop_3end(ij, jj, V) == (parameters[0].at[1, "BL"], jj-2)
 
 def test_interiorloop_symmetric(): 
     """
     Test that the energy of symmetric interior loops is the same as given in the table
     """
-    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
-
     V = np.full((34,34), float('inf'))
     V[6,27] = 0
 
+    global sequence
     sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
+    prepare_input('CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG')
 
     i_list = [x for x in range(5)]
     j_ist = [x for x in range(33, 28, -1)]
 
     for n in range(5): 
-        assert interior_loop(i_list[n], j_ist[n], V, loop, sequence) == (loop.at[10-(n*2), "IL"], (6, 27))
+        assert interior_loop(i_list[n], j_ist[n], V) == (parameters[0].at[10-(n*2), "IL"], (6, 27))
 
 def test_interiorloop_asymmetric(): 
     """
     Test that the energy of asymmetric interior loops is the same as given in the table + the penalty
     """
-    loop, stack = read_parameters("loop_improved.csv", "pairing_parameters.csv")
-
+    global sequence
     sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
-
-    penalties = [0.1*1, 0.2*2, 0.3*3, 0.4*4]
+    prepare_input('CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG')
 
     #5' loop > 3' end loop
     i = 0
@@ -205,7 +206,7 @@ def test_interiorloop_asymmetric():
     V = np.full((34,34), float('inf'))
     V[6,28] = 0
     for n in range(4): 
-        assert interior_loop(i, j_ist[n], V, loop, sequence) == (round(loop.at[10-n-1, "IL"] + penalties[n], 5), (6, 28))
+        assert interior_loop(i, j_ist[n], V) == (round(parameters[0].at[10-n-1, "IL"], 5), (6, 28))
     
     #3' loop > 5' end loop
     i_list = [x for x in range(4)]
@@ -213,7 +214,7 @@ def test_interiorloop_asymmetric():
     V = np.full((34,34), float('inf'))
     V[5,27] = 0
     for n in range(4): 
-        assert interior_loop(i_list[n], j, V, loop, sequence) == (round(loop.at[10-n-1, "IL"] + penalties[n], 5), (5, 27))    
+        assert interior_loop(i_list[n], j, V) == (round(parameters[0].at[10-n-1, "IL"], 5), (5, 27))  
 
 def test_bifurcation(): 
     """
@@ -252,9 +253,10 @@ def test_computeV():
     """
     Tests that if i and j base pair a value is calculated for V[i,j] and otherwise the value should be inf
     """
-    basepairs = ['AU', 'UA', 'CG', 'GC', 'GU', 'UG']
-    parameters = read_parameters("loop_improved.csv", "pairing_parameters.csv")
+    global sequence
     sequence = "ACGUACGUACGUACGUACGUACGU"
+    prepare_input("ACGUACGUACGUACGUACGUACGU")
+
     N = len(sequence)
     V, W = np.zeros((N, N)), np.zeros((N, N))
 
@@ -262,7 +264,7 @@ def test_computeV():
         for i in range(0, N-5): 
             j = i+l
             if j < N: 
-                compute_V(i, j, W, V, sequence, parameters)
+                compute_V(i, j, W, V)
                 if sequence[i]+sequence[j] in basepairs:
                     assert V[i,j] != float('inf')
                 else: 
@@ -272,8 +274,6 @@ def test_foldRNA():
     """
     Tests that the correct matrices are outputted for one sequence
     """
-    parameters = read_parameters("loop_improved.csv", "pairing_parameters.csv")
-
     W, V = np.full((12, 12), float('inf')), np.full((12, 12), float('inf'))
     W[0, 5:] = [4.5, 3.6, 3.6, 3.6, 2.5, 1.2, 0.5]
     W[1, 5:] = [4.5, 4.5, 4.5, 4.5, 2.5, 1.2, 0.5]
@@ -294,7 +294,11 @@ def test_foldRNA():
     V[5, 9:11] = [4.5, 5.5]
     V[6, 10] = 4.5
     
-    true_W, true_V = fold_rna("AAUCGUUCCGGU", parameters)
+    global sequence
+    sequence = "AAUCGUUCCGGU"
+    prepare_input("AAUCGUUCCGGU")
+    
+    true_W, true_V = fold_rna()
     assert true_W.all() == W.all() 
     assert true_V.all() == V.all()
 
@@ -320,8 +324,11 @@ def test_backtrack():
     """
     Tests that backtrack is done correctly trough for one sequence
     """
-    parameters = read_parameters("loop_improved.csv", "pairing_parameters.csv")
-    W, V = fold_rna("AAUCGUUCCGGU", parameters)
+    global sequence
+    sequence = "AAUCGUUCCGGU"
+    prepare_input("AAUCGUUCCGGU")
+    
+    W, V = fold_rna()
 
-    assert backtrack(W, V, parameters, "AAUCGUUCCGGU") == '.((((...))))'
+    assert backtrack(W, V) == '.(((.....)))'
 
