@@ -3,13 +3,22 @@ import os
 structure_dir = "structures/true_structures"
 sequence_dir = "sequences"
 
-def get_path_list(dir_name): 
+def get_path_list(dir_name: str) -> list[str]: 
     """
+    Returns a list of all the files in dir_name
     """
     file_names = [os.path.splitext(name)[0] for name in os.listdir(dir_name)]
     return file_names
 
-def change_name(dir_name, type_list, extension): 
+def change_name(dir_name: str, type_list: list[tuple], extension: str) -> None: 
+    """
+    Changes the names of the files. 
+
+    Args: 
+        - dir_name: name of directory containing files
+        - type_list: a list containing tuples with the first element being the name of the file without extension and the second element being the type of the RNA in the file
+        - extension: the extension of the files in the directory
+    """
     for name, rna_type in type_list: 
         new_name = (name.split('_'))
         new_name.insert(1, rna_type)
@@ -17,23 +26,16 @@ def change_name(dir_name, type_list, extension):
 
         name = os.path.join(dir_name, name + extension)
         new_name = os.path.join(dir_name, new_name + extension)
-
-        #print(name, new_name)
-        
         os.rename(name, new_name)
 
-
-    return
-
-def change_type_list(type_list, type_map):
+def change_type_list(type_list: list[tuple], type_map: dict) -> list[tuple]:
+    """
+    Takes a type_list contianing typles with te second element being the type of RNA as an integer, and converts the types to strings according to type_map
+    """
     type_list = [(t[0], type_map[t[1]]) for t in type_list]
     return type_list
 
 def main(): 
-    #file_names =  get_path_list(sequence_dir)
-
-    #print(file_names)
-
     type_map = {0: "sncRNA", 1: "tRNA", 2: "16SrRNA", 3: "5SrRNA", 4: "other", 5: "otherrRNA"}
 
     type_list = [('104_bpRNARFAM8062', 4), 
