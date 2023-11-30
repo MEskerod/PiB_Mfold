@@ -9,7 +9,10 @@ import os, sys
 
 
 ### COLLECTING EVERYTHING INTO THE ACTUAL ANALYSIS ###
-def main():
+def main() -> None:
+    """
+    Performs (almost) all the analysis for Mfold PiB project
+    """
     ### SETTING UP ###
     file_list = get_path_list("../sequences")
    
@@ -22,7 +25,8 @@ def main():
     #Generate time for all and save to .csv. Plotd an be generated or changed later
     func_time_real = {"OriginalMfold": run_Mfold_orginal, 
                       "NewestMfold": run_Mfold_newest,  
-                      "Nussinov": run_Nussinov}
+                      "Nussinov": run_Nussinov, 
+                      "MfoldWebversion": run_Mfold_web}
 
     
     #Generate times for all functions
@@ -37,9 +41,11 @@ def main():
     synthetic_dict = {"NewestMfoldSynthetic": synthetic_time, "Length": synthetic_lengths}
     write_csv(synthetic_dict, "../results/syntethic_times.csv")
 
+    """
     #FOR RE-LOADING DICTIONARIES
-    #synthetic_dict = read_csv("../results/syntethic_times.csv")
-    #time_dict = read_csv("../results/time_table.csv")
+    synthetic_dict = read_csv("../results/syntethic_times.csv")
+    time_dict = read_csv("../results/time_table.csv")
+    """
 
     ### CALCULATE DISTANCES BETWEEN STRUCTURES ###
     #Get a list of all the folders with structures: 

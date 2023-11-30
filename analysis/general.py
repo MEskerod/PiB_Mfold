@@ -7,7 +7,7 @@ from Bio.SeqRecord import SeqRecord
 
 
 ### GENERAL FUNCTIONS ###
-def get_path_list(dir_name): 
+def get_path_list(dir_name: str) -> list[str]: 
     """
     Makes a list of all the files in the given directory. 
     Returns a list of "dir_name/file_name"
@@ -16,7 +16,7 @@ def get_path_list(dir_name):
     return file_names
 
 
-def write_csv(data, output_file): 
+def write_csv(data, output_file: str) -> None: 
     """
     Data is written to a .csv file
     The input data can be a dictionary, with the keys being the column names and values being the columns
@@ -24,7 +24,7 @@ def write_csv(data, output_file):
     df = pd.DataFrame(data)
     df.to_csv(output_file, index=False)
 
-def read_csv(input_file): 
+def read_csv(input_file: str) -> dict: 
     """
     Reads a .csv file and returns the data as a dictionary
     """
@@ -32,13 +32,14 @@ def read_csv(input_file):
     data_dict = df.to_dict(orient='list')
     return data_dict
 
-def write_fasta(sequence, seq_id, file_name):
+def write_fasta(sequence: str, seq_id: str, file_name: str) -> None:
     """
     Writes a sequence to a fasta file
 
-    sequence: the sequence that has to be written to a file 
-    seq_id: the id/name of the sequence
-    file_name: the name of the file. Has to have the extension .fasta
+    Args:
+        - sequence: the sequence that has to be written to a file 
+        - seq_id: the id/name of the sequence
+        - file_name: the name of the file. Has to have the extension .fasta
     """
     seq = Seq(sequence)
     record =  SeqRecord(seq, id = seq_id)
@@ -46,7 +47,7 @@ def write_fasta(sequence, seq_id, file_name):
     with open(file_name, "w") as f: 
         SeqIO.write(record, f, "fasta")
 
-def make_dir(dir_name):
+def make_dir(dir_name: str) -> str:
     """
     Make a directory, if the directory does not exist
     """
@@ -54,7 +55,7 @@ def make_dir(dir_name):
             os.makedirs(dir_name)
     return dir_name
 
-def read_dbn_file(file):
+def read_dbn_file(file: str) -> tuple[str, str]:
     """
     Read the dot bracket structure and sequence from a .dbn file. 
     The .dbn file has header lines that starts with #
@@ -71,7 +72,7 @@ def read_dbn_file(file):
 
     return lines[1], lines[0] #dot bracket, sequence
 
-def read_fasta(input) -> str:
+def read_fasta(input: str) -> str:
     """
     Reads in a FASTA-file and returns the sequence
     If there is more than one sequence in the FASTA file it gives an error
@@ -85,9 +86,10 @@ def read_fasta(input) -> str:
 
 ### ANALYSIS FUNCTIONS ###
 
-def get_len_and_type(file_list): 
+def get_len_and_type(file_list: list[str]) -> tuple[list[int], list[str]]: 
     """
-    The files has to be named as ... (len_type_rest)
+    Takes a list of files and returns two list. One containing the lengths of the sequences in the file an a second containing the type of RNA. 
+    The files has to be names as some/path/lenght_type_rest
     """
     
     lenghts = []
@@ -101,22 +103,27 @@ def get_len_and_type(file_list):
     return lenghts, types
 
 
-def generate_random_sequence(length: int, alphabet: list): 
+def generate_random_sequence(length: int, alphabet: list) -> str: 
     """
     Generates a random seuence of a given length. 
     
-    length: length of the sequence that is generated
-    alphabet: the characters from which to generate the sequence
+    Args:
+        - length: length of the sequence that is generated
+        - alphabet: the characters from which to generate the sequence
     """
     random_sequence = "".join(random.choice(alphabet) for _ in range(length))
     return random_sequence
 
-def create_quadratic_function(y_intercept: int, point: tuple): 
+def create_quadratic_function(y_intercept: int, point: tuple[int, int]) -> callable: 
     """
     Returns the quadratic function. 
     The quadratic function that is returned will have a positive a value and will be centered around 0 (b=0)
 
     f(x) = a*x^2 + b*x + c and since b = 0, it is just f(x) = a*x^2 + b
+
+    Args: 
+        - y_intercept: the point where the quadratic funtion intercepts the y-axis
+        - point: a point that fullfils = f(x) = y
     """
     c = y_intercept
 
@@ -129,13 +136,14 @@ def create_quadratic_function(y_intercept: int, point: tuple):
     
     return quadratic
 
-def calculate_slice_lengths(num_slices, min_length, initial_length):
+def calculate_slice_lengths(num_slices: int, min_length: int, initial_length: int) -> list[int]:
     """
-    Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a uadratic function. 
+    Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a quadratic function. 
 
-    num_slices: Number of slices wanted 
-    min_length: Length of the shortest slice 
-    initial_length: Length of the sequence to slice from, which is also equal to the maximum length
+    Args:
+        - num_slices: Number of slices wanted 
+        - min_length: Length of the shortest slice 
+        - initial_length: Length of the sequence to slice from, which is also equal to the maximum length
     """
     slice_lengths = []
     quadratic = create_quadratic_function(min_length, (num_slices, initial_length))
