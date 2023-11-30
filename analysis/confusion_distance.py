@@ -1,5 +1,4 @@
 import os
-import matplotlib.pyplot as plt
 from itertools import permutations
 
 from general import get_path_list, read_dbn_file

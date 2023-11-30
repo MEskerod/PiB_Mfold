@@ -1,5 +1,4 @@
 import os, sys
-from Bio import SeqIO
 
 from general import read_dbn_file, read_fasta
 
