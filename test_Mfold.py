@@ -2,8 +2,6 @@ import pytest
 import numpy as np
 from io import StringIO
 
-import importlib
-
 from Mfold_original import(
     read_fasta,
     prepare_input,

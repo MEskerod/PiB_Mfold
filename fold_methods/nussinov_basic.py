@@ -3,7 +3,7 @@ from io import TextIOWrapper
 from Bio import SeqIO
 import numpy as np
 
-def read_fasta(input) -> str:
+def read_fasta(input: str) -> str:
     """
     Reads in a FASTA-file and returns the sequence
     If there is more than one sequence in the FASTA file it gives an error
@@ -29,15 +29,22 @@ def prepare_input(input: str) -> str:
     
     return input
 
-def db_to_file(sequence, db, filename, name): 
+def db_to_file(sequence: str, db: str, filename: str, name: str) -> None:
+    """
+    Writes sequence and structure to a dbn file. 
+    Header lines are denoted by #
+    """ 
     with open(filename, 'w') as f: 
         f.write(f"#Name: {name}\n")
         f.write(f"#Length: {len(sequence)}\n")
         f.write(sequence + "\n")
         f.write(db + "\n")
 
-def pairing_score(i, j, S, sequence): 
+def pairing_score(i: int, j: int, S: np.array, sequence: str): 
     """
+    Returns the score of pairing i and j. 
+    If i and j can form a basepair the score is 1 + S[i+1, j-1] 
+    Otherwise it is negative infinity (not possible structure)
     """
     basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
 
@@ -48,8 +55,9 @@ def pairing_score(i, j, S, sequence):
     
     return score
 
-def bifurcating_score(i, j, S):
+def bifurcating_score(i: int, j: int, S: np.array) -> tuple:
     """
+    Tries all the possible bifurcating loops and returns the score and k that gives the maximum energy
     """
     score = float('-inf')
     end_k = 0
@@ -61,7 +69,11 @@ def bifurcating_score(i, j, S):
             end_k = k
     return score, end_k
 
-def fill_S(sequence): 
+def fill_S(sequence: str) -> np.array:
+    """
+    Fills out the S matrix
+    """
+
     N = len(sequence)
     S = np.zeros([N, N])
 
@@ -80,34 +92,42 @@ def fill_S(sequence):
                 
     return S
 
-def find_optimal(S) -> float: 
+def find_optimal(S: np.array) -> float: 
     """
     Find the final energy of the folded RNA
     """
     return S[0, -1]
 
-def backtrack(i, j, S, dotbracket, sequence): 
+def backtrack(i: int, j: int, S: np.array, dotbracket: list, sequence: str) -> None: 
+    """
+    Backtracks trough the S matrix, to find the structure that gives the maximum energy
+    """
     if j-i-1 <= 3: 
         dotbracket[i], dotbracket[j] = '(', ')'
         for n in range(i+1, j): 
             dotbracket[n] = '.'
+
     elif S[i, j] == S[i+1, j]: 
         dotbracket[i] = '.'
         backtrack(i+1, j, S, dotbracket, sequence)
+
     elif S[i, j] == S[i, j-1]: 
         dotbracket[j] = '.'
         backtrack(i, j-1, S, dotbracket, sequence)
     elif S[i, j] == pairing_score(i, j, S, sequence): 
+
         dotbracket[i], dotbracket[j] = '(', ')'
         backtrack(i+1, j-1, S, dotbracket, sequence)
+
     elif S[i, j] == bifurcating_score(i, j, S)[0]:
         k = bifurcating_score(i, j, S)[1]
         backtrack(i, k, S, dotbracket, sequence), backtrack(k+1, j, S, dotbracket, sequence)
 
     
 
-def fold_RNA(S, sequence): 
+def fold_RNA(S: np.array, sequence: str) -> str: 
     """
+    Finds the optimal structure of foldning the sequence and returns the dot bracket notation
     """
     dotbracket =  ['?' for x in range(S.shape[0])]
     
@@ -130,12 +150,11 @@ def main() -> None:
     argparser = argparse.ArgumentParser(
         description="" )
     #Adding arguments
-    #TODO - Add description/help for command line options
     #Input can either be provided in a file or in stdin
-    argparser.add_argument('-i', '--input') 
-    argparser.add_argument('-f', '--file', type=argparse.FileType('r'))
+    argparser.add_argument('-i', '--input', metavar='', help = 'input provided at sequence in command line') 
+    argparser.add_argument('-f', '--file', type=argparse.FileType('r'), metavar='', help = 'input provided as fasta file')
     #Setting up output. Writes to specified outfile or stdout
-    argparser.add_argument('-o', '--outfile', metavar='output', default=sys.stdout)
+    argparser.add_argument('-o', '--outfile', metavar='', default=sys.stdout, help='name for output file without extension')
 
     args = argparser.parse_args()
 

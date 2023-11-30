@@ -409,10 +409,10 @@ def main() -> None:
         )
     #Adding arguments
     #Input can either be provided in a file or in stdin
-    argparser.add_argument('-i', '--input', metavar='sequence', help = 'input provided at sequence in command line') 
-    argparser.add_argument('-f', '--file', type=argparse.FileType('r'), metavar='input', help = 'input provided as fasta file')
+    argparser.add_argument('-i', '--input', metavar='', help = 'input provided at sequence in command line') 
+    argparser.add_argument('-f', '--file', type=argparse.FileType('r'), metavar='', help = 'input provided as fasta file')
     #Setting up output. Writes to specified outfile or stdout
-    argparser.add_argument('-o', '--outfile', metavar='output', default=sys.stdout, help='name for output file without extension')
+    argparser.add_argument('-o', '--outfile', metavar='', default=sys.stdout, help='name for output file without extension')
 
     args = argparser.parse_args()
     

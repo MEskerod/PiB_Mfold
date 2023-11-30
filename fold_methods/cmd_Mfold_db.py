@@ -2,8 +2,9 @@ from io import TextIOWrapper
 from Bio import SeqIO
 import argparse, subprocess, os
 
-def run_Mfold(filename): 
+def run_Mfold(filename: str) -> None: 
     """
+    Runs the version of Mfold downloaded from unafold website
     """
     command = f'mfold SEQ={filename}'
 
@@ -11,7 +12,7 @@ def run_Mfold(filename):
 
     result.wait()
 
-def read_ct(file) -> tuple():
+def read_ct(file:str) -> tuple:
     """  
     Takes a .ct file and returns the sequence as a string and a list of base pairs
     """
@@ -30,7 +31,7 @@ def read_ct(file) -> tuple():
 
     return sequence, pairs
 
-def sequence_pair_from_fasta(file): 
+def sequence_pair_from_fasta(file: str) -> tuple: 
     """
     Reads in a FASTA-file and returns the sequence
     If there is more than one sequence in the FASTA file it gives an error
@@ -43,8 +44,9 @@ def sequence_pair_from_fasta(file):
     
     return str(records[0].seq), []
 
-def remove_files(filename): 
+def remove_files(filename: str) -> None: 
     """
+    Remove file filename
     """
     target, _ = os.path.splitext(os.path.basename(filename))
     cdir = os.getcwd()
@@ -53,7 +55,11 @@ def remove_files(filename):
               if name.startswith(target):
                    os.remove(os.path.join(cdir, name))
 
-def ct_to_db(length, pairs):
+def ct_to_db(length: int, pairs: list[tuple]):
+    """
+    Takes a list of base pairs and converts it to a db file
+    Cannot handle pseudo knots
+    """
     db = ['.' for n in range(length)] 
 
     for pair in pairs: 
@@ -63,7 +69,11 @@ def ct_to_db(length, pairs):
      
     return "".join(db)
 
-def db_to_file(sequence, db, filename, name): 
+def db_to_file(sequence: str, db: str, filename: str, name: str) -> None: 
+    """
+    Writes a sequence and structure to a dbn file 
+    Header lines a denoted by #
+    """
     with open(filename, 'w') as f: 
         f.write(f"#Name: {name}\n")
         f.write(f"#Length: {len(sequence)}\n")
@@ -72,13 +82,12 @@ def db_to_file(sequence, db, filename, name):
 
 
 def main(): 
-    argparser = argparse.ArgumentParser(description="" )
+    argparser = argparse.ArgumentParser(description="Program to run the version of Mfold from unafold website (anno fall 2023) and save the structure as dbn file " )
     #Adding arguments
-    #TODO - Add description/help for command line options
     #Input can either be provided in a file or in stdin
-    argparser.add_argument('filename') 
+    argparser.add_argument('filename', help="Name of input file") 
     #Setting up output. Writes to specified outfile or stdout
-    argparser.add_argument('outputdir')
+    argparser.add_argument('outputdir', help = "Name of directory where file is outputted")
 
     args = argparser.parse_args()
 
@@ -88,6 +97,7 @@ def main():
     basename = os.path.splitext(os.path.basename(file))[0]
     ct_file = basename + '.ct'
 
+    #If Mfold isn't able to generate a structure the string is rendered unfolded
     if os.path.exists(ct_file):
         sequence, pairs = read_ct(ct_file) 
     else: 
