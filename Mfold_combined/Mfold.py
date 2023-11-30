@@ -1,14 +1,17 @@
-import ast, argparse, sys, time, math
+import ast, argparse, sys, time, math, os
 import numpy as np
 import pandas as pd
 from Bio import SeqIO
 from io import TextIOWrapper
 
 ####### HELP FUNCTIONS #######
-def read_fasta(input) -> str:
+def read_fasta(input: str) -> str:
     """
     Reads in a FASTA-file and returns the sequence
-    If there is more than one sequence in the FASTA file it gives an error
+    If there is more than one sequence in the FASTA file an error is raised 
+
+    Args: 
+        input: path to input sequence
     """
     records = list(SeqIO.parse(input, 'fasta'))
     
@@ -19,12 +22,16 @@ def read_fasta(input) -> str:
 
 def prepare_input(input: str) -> str: 
     """
-    Strips new line in the end
-    Makes sure that all letters are in upper case
+    Prepares the input for folding. 
     A value error is raised if any invalid letters are found in the sequence.  
+    The prepared sequence is defined as a global variable
+
+    args: 
+        input: RNA sequence 
     """
     
     global sequence
+    #Strips white space, changes to upper case and replaces T with U
     sequence = input.strip().upper().replace('T', 'U')
 
     allowed = set(['A', 'C', 'G', 'U', 'N'])
@@ -33,12 +40,14 @@ def prepare_input(input: str) -> str:
     
     return sequence
 
-def read_parameters(file_loop, file_stacking): 
+def read_parameters(file_loop: str, file_stacking: str) -> tuple[pd.array, pd.array]: 
     """
-    Read parameters from to .csv files:
-    - One containing the loop parameters 
-    - A second one containg the parameters for different types og base pairing 
-    The .csv files are converted to Pandas tables and returned
+    Read parameters from two .csv files:
+    The .csv files are converted to Pandas tables and defined as the global variable 'parameters'
+
+    Args: 
+        file_loop: csv file containing the parameters for different loop types and lengths
+        file_stacking: csv file containing the parameters for base paring between different nucleotides
     """
     try:
         loops = pd.read_csv(file_loop) 
@@ -53,8 +62,15 @@ def read_parameters(file_loop, file_stacking):
     
     return parameters
 
-def write_dbn(name, sequence, fold, outfile: TextIOWrapper):
+def write_dbn(name: str, sequence: str, fold: str, outfile: TextIOWrapper) -> None:
     """
+    Writes sequence and fold to dbn file
+
+    args: 
+        name: name or ID of the sequence 
+        sequence: RNA sequence
+        fold: dot bracket structure
+        outfile: an opened file to write to
     """
     outfile.write(f"#Name: {name}\n")
     outfile.write(f"#Length: {len(sequence)}\n")
@@ -62,8 +78,13 @@ def write_dbn(name, sequence, fold, outfile: TextIOWrapper):
     outfile.write(fold + "\n")
 
 
-def parse_asymmetry_parameters(input_string: str): 
+def parse_asymmetry_parameters(input_string: str) -> tuple[list, int]: 
     """
+    Function for parsing the parameters for the penalty function for asymmetric loops that is given trough the command line
+    Returns a list and an integer
+
+    Args: 
+        - input_string: string that represents a list and an integer. Example: "[0.4, 0.3, 0.2, 0.1]; 6]
     """
     try: 
         #Split into the f and penalty max parts
@@ -80,7 +101,15 @@ def parse_asymmetry_parameters(input_string: str):
     except Exception as e: 
         raise argparse.ArgumentTypeError(f"Invalid input: {input_string}. Error: {str(e)}")
 
-def declare_global_variable(b_stacking = False, closing = False, asymmetry = False): 
+def declare_global_variable(b_stacking: bool = False, closing: bool = False, asymmetry: bool = False) -> None: 
+    """
+    Declares the global variables used troughout all the other functions. 
+
+    Args: 
+        - b_stacking: Is stacking retained for bulge loops of size 1 [True/False] (default = False)
+        - closing: Is closing penalty added for GU/UG and AU/UA base pairs that closses interior loops [True/False] (default = False)
+        - asymmetry: Is a penalty added for asymmetric interior loops [True/False] (default = False)
+    """
     global basepairs, bulge_stacking, closing_penalty, asymmetry_penalty
 
     basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
@@ -91,7 +120,7 @@ def declare_global_variable(b_stacking = False, closing = False, asymmetry = Fal
 
 
 ####### FOLD FUNCTIONS #######
-def make_asymmetric_penalty(f, penalty_max): 
+def make_asymmetric_penalty(f: list, penalty_max: int) -> callable: 
     """
     f has to be a list. In articles writen as f(1), f(2) and so forth
 
@@ -99,11 +128,18 @@ def make_asymmetric_penalty(f, penalty_max):
     This penalty does not exists in the orginial paper, but is added later
 
     This functions returns a function that uses the given parameters to calculate the penalty for asymmetric loops of given size
+
+    args: 
+        - f: list that gives the values from f(0) to f(m_max). 
+        - penalty_max: that maximum penalty that can be addded to ad asymmetric interior loop
     """
 
     M_max = len(f)
 
-    def asymmetry_func(i, ip, j, jp):
+    def asymmetry_func(i: int, ip: int, j: int, jp: int) -> float:
+        """
+        Calculates the penalty to add to the asymmetric interior loop enclosed by the base pairs i and j and i' and p' 
+        """
         N1 = (ip-i-1)
         N2 =(j-jp-1)
         N = abs(N1-N2)
@@ -116,12 +152,14 @@ def make_asymmetric_penalty(f, penalty_max):
 
     return asymmetric_penalty_function
 
-def loop_greater_10(loop_type, length):
+def loop_greater_10(loop_type: str, length: int) -> float:
     """
     Calculates the energy parameters for loops with a size greater than 10 
     The parameter is calculated as described in 'Improved predictions of secondary structures for RNA'
 
-    The function returns the energi parameter for a loop of a given type and size. 
+    Args: 
+        loop_type: type of loop to calculate energy for (HL, IL or BL)
+        length: length of the loop
     """
     R = 0.001987 #In kcal/(mol*K)
     T = 310.15 #In K
@@ -132,7 +170,7 @@ def loop_greater_10(loop_type, length):
     return G
 
 ### LOOP ENERGIES ###
-def stacking(i, j, V): 
+def stacking(i: int, j: int, V: np.array) -> float: 
     """
     Find the energy parameter for basepairing of Sij and Si+1j-1, which results in basepair stacking
     If Si+1 and Sj+1 cannot basepair the energy is infinity
@@ -141,80 +179,76 @@ def stacking(i, j, V):
 
     prev_bp = sequence[i+1] + sequence[j-1]   
     
+    #If previous bases can form a base pair stacking is possible
     if prev_bp in basepairs: 
         current_bp = sequence[i] + sequence[j]
         energy = round(parameters[1].at[current_bp, prev_bp] + V[i+1, j-1], 5)
+    
     else: 
         energy = float('inf')
+    
     return energy
 
-def bulge_loop_3end(i, j, V): 
+def bulge_loop_3end(i: int, j: int, V: np.array) -> tuple[float, int]: 
     """
-    Find the energy parameter of introducing a bulge loop on the 3' end. 
-    If the size of the bulge loop is 1 and stacking=True, stacking on each side of the loop is retained and stacking parameter is added
-    Is able to handle loops of any size
+    Find the energy parameter of introducing a bulge loop on the 3' end of the strand 
     """
     energy = float('inf')
     ij = None
 
-    #Bulge on 3' end
+    #Try all sizes of bulge loop and save the one that gives the lowest energy
     for jp in range(i+2,j-1):  
         bp = sequence[i+1]+sequence[jp]
         if bp in basepairs: 
             size = j-jp-1
             if size <= 10:
                BL_energy = parameters[0].at[size, "BL"] + V[i+1, jp]
-               if size == 1 and bulge_stacking: 
+               if size == 1 and bulge_stacking: #Add stacking parameter if stacking for bulge loops is retained
                    BL_energy += parameters[1].at[(sequence[i]+sequence[j]), bp]
             else: 
                 BL_energy = loop_greater_10("BL", size) + V[i+1, jp]
             
             if BL_energy < energy: 
-                energy = round(BL_energy, 5)
+                energy = BL_energy
                 ij = jp
     
-    return energy, ij
+    return round(energy, 5), ij
 
-def bulge_loop_5end(i, j, V):
+def bulge_loop_5end(i: int, j: int, V: np.array) -> tuple[float, int]:
     """
-    Find the energy parameter of introducing a bulge loop on the 5' end. 
-    If the size of the bulge loop is 1 and stacking=True, stacking on each side of the loop is retained and stacking parameter is added
-    Is able to handle loops of any size
+    Find the energy parameter of introducing a bulge loop on the 5' end of the strand 
     """
     energy = float('inf')
     ij = None
     
-    #Bulge on 5' end
+    #Try all sizes of bulge loop and save the one that gives the lowest energy
     for ip in range(i+2,j-1):  
         bp = sequence[ip]+sequence[j-1]
         if bp in basepairs: 
             size = ip-i-1
             if size <= 10:
                 BL_energy = parameters[0].at[size, "BL"] + V[ip, j-1]
-                if size == 1 and bulge_stacking: 
+                if size == 1 and bulge_stacking: #Add stacking parameter if stacking for bulge loops is retained
                     BL_energy += parameters[1].at[(sequence[i]+sequence[j]), bp] 
             else: 
                 BL_energy = loop_greater_10("BL", size) + V[ip, j-1]
 
             if BL_energy < energy: 
-                energy = round(BL_energy, 5)
+                energy = BL_energy
                 ij = ip
 
-    return energy, ij
+    return round(energy, 5), ij
 
-def interior_loop(i, j, V): 
+def interior_loop(i: int, j: int, V: np.array) -> tuple[float, tuple[int, int]]: 
     """
-    Find the energy parameter of adding a interior loop. 
-    Is able to handle loops of any size
-    A penalty is added for asymmetric loops. If the penalty should not be added interior_loop should be called with asymmetry = False
-    A penalty is added for interior loops closed by AU and GU base pairs
+    Find the energy parameter of adding a interior loop
     """
     
     energy = float('inf')
     ij = None
 
-    for ip in range(i+2, j-2): 
-        for jp in range(ip+3, j-1): 
+    for ip in range(i+2, j-2): #Try loop of any size between i and i'
+        for jp in range(ip+3, j-1): #Try loop of any size between j and j'
             bp_prime = sequence[ip] + sequence[jp]
             if bp_prime in basepairs:
                 size = (ip-i-1)+(j-jp-1)
@@ -235,16 +269,14 @@ def interior_loop(i, j, V):
                 
                 #Check if energy is smaller than current min
                 if IL_energy < energy: 
-                    energy = round(IL_energy, 5)
+                    energy = IL_energy
                     ij = (ip, jp)
     
-    return energy, ij
+    return round(energy, 5), ij
 
-def find_E1(i, j):
+def find_E1(i: int, j: int) -> float:
     """
-    E1 is when Si and Sj basepair and gives one internal edge 
-    This gives a hairpin loop 
-    The function is able to handle loops of any size
+    E1 are the energy of base pairing between Si and Sj with one internal edge (hairpin loop) 
     """
     size = j-i-1    
 
@@ -252,13 +284,11 @@ def find_E1(i, j):
 
     return round(energy, 5)
 
-def find_E2(i, j, V): 
+def find_E2(i: int, j: int, V: np.array) -> float: 
     """
-    E2 is when Si and Sj contains two internal edged 
-    Contains an edge between Si and Sj and an edge between Si' and Sj' 
+    E2 is the energy of basepairing between i and j and i' and j' resulting in two internal edges (stacking, bulge loop or internal loop)
     i<i'<j'<j
-    Can be stacking, bulge loops or internal loops
-    Returns the minimum of the 3 options. 
+    Returns the minimum of the 3 options  
     """
     energy = min(stacking(i, j, V), 
                  bulge_loop_3end(i, j, V)[0], 
@@ -266,16 +296,16 @@ def find_E2(i, j, V):
                  interior_loop(i, j, V)[0])
     return energy
 
-def find_E3(i, j, W): 
+def find_E3(i: int, j: int, W: np.array) -> float: 
     """
-    E3 contains more than two internal edges
-    Gives a bifurcating loop
-    The energy is the energy of the substructures 
+    E3 is the energy of a structure that contains more than two internal edges (bifurcating loop)
+    The energy is the energy of the sum of the substructures 
     i+1<i'<j-2
     """
     energy = float('inf')
     ij = None
 
+    #Try all combinations of substructure and save the one that gives the lowest energy
     for ip in range(i+2, j-2):  
         loop_energy = W[i+1, ip] + W[ip+1, j-1]
         if loop_energy < energy: 
@@ -283,10 +313,10 @@ def find_E3(i, j, W):
             ij = (ip, ip+1)
     return energy, ij
 
-def find_E4(i, j, W): 
+def find_E4(i: int, j: int, W: np.array) -> tuple[float, tuple[int, int]]: 
     """
-    i and j both base pair, but not with each other. 
-    It find the minimum of combinations of to possible subsequences containing i and j
+    E4 is the energy when i and j are both in base pairs, but not with each other. 
+    It find the minimum of combinations of two possible subsequences containing i and j
     """
     energy = float('inf')
     ij = None
@@ -300,10 +330,9 @@ def find_E4(i, j, W):
 
     return energy, ij
 
-### FILL V AND W ###
-def penta_nucleotides(W, V):
+def penta_nucleotides(W: np.array, V: np.array) -> None:
     """
-    Initiates the V and W matrices. 
+    Fills out the first entries in the matrices V and W 
     The shortest possible subsequences are of length 5 and can only form hairpin loops of size 3 if i and j basepair
     """
     N = len(sequence)
@@ -316,7 +345,8 @@ def penta_nucleotides(W, V):
         else: 
             V[i,j] = W[i,j] = parameters[0].at[3, "HL"] 
 
-def compute_V(i, j, W, V): 
+### FILL V AND W ###
+def compute_V(i: int, j: int, W: np.array, V: np.array) -> None: 
     """
     Computes the minimization over E1, E2 and E3, which will give the value at V[i,j]
     """
@@ -331,9 +361,9 @@ def compute_V(i, j, W, V):
 
     V[i, j] = v
 
-def compute_W(i, j, W, V):
+def compute_W(i: int, j: int, W: np.array, V: np.array) -> None:
     """
-    Computes the minimization over possibilities for W, which will give the value for W[i,j]
+    Computes the minimization over possibilities for W and fills out the entry at W[i,j]
      Possibilities are: 
     - i or j in a structure (W[i+1, j] or W[i, j-1])
     - i and j basepair with each other (V[i,j])
@@ -344,25 +374,25 @@ def compute_W(i, j, W, V):
     W[i,j] = w
 
 
-def fold_rna(): 
+def fold_rna() -> tuple[np.array, np.array]: 
     """
     Fills out the W and V matrices to find the fold that gives the minimum free energy
     Follows Mfold as desribed by M. Zuker
 
     The V matrix contains the minimum free energy for the subsequences i and j, if i and j has to form a pair. 
-    Is Si and Sj are not able to basepair the energy will be infinity (not possible)
+    If i and j are not able to basepair the energy will be infinity (not a possible structure)
 
-    The W matrix contains the minimum free energy for the subsequences i and j, but i and j does not have to basepair. 
+    The W matrix contains the minimum free energy for the subsequences i and j where base pairing between i and j is not nessecary.
     """
     N = len(sequence)
     W, V = np.full([N, N], float('inf')), np.full([N, N], float('inf'))
 
 
-    #Fills out the table with all the penta nucleotide.
-    #Penta nucleotides are the base cases. If shorter they cannot be folded
+    #Fills out the table with all posible penta nucleotide subsequences
+    # Penta nucleotides are the base cases. If subsequences are shorter they cannot be folded
     penta_nucleotides(W, V) 
 
-    for l in range(5, N): #Computes the best score for all subsequences that are longer than 5 nucleotides
+    for l in range(5, N): #Computes the best score for all subsequences that are longer than 5 nucleotides with increasing length
         for i in range(0, N-5): 
             j = i+l
             if j < N: 
@@ -371,15 +401,16 @@ def fold_rna():
 
     return W, V
 
-def find_optimal(W) -> float: 
+def find_optimal(W: np.array) -> float: 
     """
     Find the final energy of the folded RNA
     """
     return W[0, -1]
 
 ### BACTRACKING ### 
-def trace_V(i, j, W, V, dotbracket): 
+def trace_V(i: int, j: int, W: np.array, V: np.array, dotbracket: list) -> None: 
     """
+    Traces backwards trough the V matrix recursively to find the secondary structure
     """
     if V[i,j] == find_E1(i, j): 
         dotbracket[i], dotbracket[j] = '(', ')'
@@ -418,8 +449,9 @@ def trace_V(i, j, W, V, dotbracket):
         dotbracket[i], dotbracket[j] = '(', ')' 
         trace_W(i+1, ij[0], W, V, dotbracket), trace_W(ij[1], j-1, W, V, dotbracket)
 
-def trace_W(i, j, W, V, dotbracket): 
+def trace_W(i: int, j: int, W: np.array, V: np.array, dotbracket: list) -> None: 
     """
+    Traces backwards trough the W matrix recursively to find the secondary structure
     """
     if W[i,j] == W[i+1, j]: 
         dotbracket[i] = '.'
@@ -438,15 +470,18 @@ def trace_W(i, j, W, V, dotbracket):
 
 
 
-def backtrack(W, V): 
+def backtrack(W: np.array, V: np.array) -> str: 
     """
     Backtracks trough the W, V matrices to find the final fold
+    Returns the fold as a dotbracket structure
     """
+    #Allocate the dot bracket structure
     dotbracket =  ['?' for x in range(W.shape[0])]
     
     j = W.shape[0]-1
     i = 0
     
+    #Fill out db
     trace_W(i, j, W, V,dotbracket)
 
     return "".join(dotbracket)
@@ -455,31 +490,44 @@ def backtrack(W, V):
 
 def main() -> None: 
     """
-    Running the program
-    Takes following arguments: 
-    input - Can be a file or written in the command line. -i followed by sequence or -f followed by file name. File must be a FASTA file containing one sequence
-    ouput - Can be a file specified by using the flag -o or a the default stdout
+    Running the program to predict the secondary structure of an RNA sequence
+    
+    args:
+        - i: input given as sequence in command line 
+        - f: input given as fasta file containing one seqeuence
+        - lp: specifies which set of parameters is used [1988, 1989] (default = 1989)
+        - b: used to retain base pair stacking for bulge loops of size one
+        - a: used to add penalty for asymmetric interior loops
+        - c: used to add penalty for GU/UG and AU/UA base pairs that closes interior loops
+        - A: used to specify the parameters to use to calculate asymmetric penalty ["f; penalty_max"] (default = "[0.4, 0.3, 0.2, 0.1], 3")
+        - lf and sf: used to add costum parameter files for loops and stacking respectively
+        - o: name of output file for dot bracket structure without extension (default = stdout)
     """
     #Setting up the option parsing using the argparse module
-    argparser = argparse.ArgumentParser(
-        description="" )
+    argparser = argparse.ArgumentParser(prog='Mfold',
+        description="""Version of Mfold implemented by Maria Eskerod.
+                     Implemented as a part of a project in bioinformatics, fall 2023.
+                     Bioinformatic Research Center at Aarhus University""", 
+        epilog="""Penalty for asymmetry for interior loops: A penalty is calculated as min(max penalty, N*f(M)) 
+        where M = min(max_M, N1, N2) with N1 and N2 being the number of unpaired bases on each strand and N = abs(N1 - N2)""")
     #Adding arguments
-    #TODO - Add description/help for command line options
     #Input can either be provided in a file or in stdin
-    argparser.add_argument('-i', '--input') 
-    argparser.add_argument('-f', '--file', type=argparse.FileType('r'))
-    argparser.add_argument('-lp', '--loop_parameters', type=str, choices=['1988', '1989'], default='1989')
-    argparser.add_argument('-b', '--bulge_stacking', action='store_true')
-    argparser.add_argument('-a', '--asymmetric', action='store_true')
-    argparser.add_argument('-c', '--closing_penalty', action='store_true')
-    argparser.add_argument('-A', '--asymmetry_parameters', type=parse_asymmetry_parameters, default=[[0.4, 0.3, 0.2, 0.1], 3])
-    argparser.add_argument('-lf', '--loop_file')
-    argparser.add_argument('-sf', '--stacking_file')
+    argparser.add_argument('-i', '--input', metavar='', help = 'input provided as sequence in command line') 
+    argparser.add_argument('-f', '--file', type=argparse.FileType('r'), metavar='', help = 'input provided as fasta file')
+    #Used to modify which version of Mfold is used
+    argparser.add_argument('-lp', '--loop_parameters', type=str, choices=['1988', '1989'], default='1989', help='used to specify what set of loop parameters should be used. The options are 1988 and 1989 (default = 1988)')
+    argparser.add_argument('-b', '--bulge_stacking', action='store_true',  help='if -b/--bulge_stacking is used stacking is retained for bulge loops of size 1 and the energy parameter for stacking will be added to the loop energy')
+    argparser.add_argument('-a', '--asymmetric', action='store_true', help='if -a/--asymmetric is used a penalty will be added for asymmetric interior loops (see below)')
+    argparser.add_argument('-c', '--closing_penalty', action='store_true', help='if -c/--closing_penalty is used a penalty will be added for GU/UG and AU/UA base pairs that closes interior loops')
+    argparser.add_argument('-A', '--asymmetry_parameters', type=parse_asymmetry_parameters, default=[[0.4, 0.3, 0.2, 0.1], 3], metavar='', help='parameters used to calculate the penalty to add for asymmetric interior loops. Must be supplied as "f; penalty_max" (default = "[0.4, 0.3, 0.2, 0.1], 3") (see further description below). Only used if -a is also used')
+    argparser.add_argument('-lf', '--loop_file', metavar= '', help='user defined parameter file for loops. Must contain energy for hairpin (HL), interior (IL) and bulge loops (BL) for sizes up to 10 in a csv file.')
+    argparser.add_argument('-sf', '--stacking_file', metavar='', help='User defined parameter file for base pair stacking. Must contain energy for all possible base pairs as a matrix in a csv file.')
     #Setting up output. Writes to specified outfile or stdout
-    argparser.add_argument('-o', '--outfile', metavar='output', default=sys.stdout)
+    argparser.add_argument('-o', '--outfile', metavar='', default=sys.stdout, help='name for output file without extension')
 
     args = argparser.parse_args()
 
+    #Read sequence
     if args.input: 
         prepare_input(args.input)
         name = "user inputted sequence"
@@ -491,28 +539,35 @@ def main() -> None:
     if not sequence: 
         raise ValueError("No valid input sequence provided.")
     
+    #Declare the global parameters that defines the version of Mfold
     declare_global_variable(args.bulge_stacking, args.closing_penalty, args.asymmetric)
 
+    #Make penalty function for asymmetric loops
     f, penalty_max = args.asymmetry_parameters
+    make_asymmetric_penalty(f, penalty_max)
 
-    #Change to find the right path whereever they are called from
+
+    #Find absolute path of script, to be able to open csv files whereever the script is called from
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    #Define the parameters to use for folding
     if args.loop_file: 
         loop_file = args.loop_file
     elif args.loop_parameters == '1988':
-        loop_file = "../Mfold/parameters/loop_1988.csv"
+        loop_file = os.path.join(script_dir, 'parameters', 'loop_1988.csv')
     elif args.loop_parameters == '1989':
-        loop_file = "../Mfold/parameters/loop_1989.csv"
+        loop_file = os.path.join(script_dir, 'parameters', 'loop_1989.csv')
 
 
     if args.stacking_file:
         stacking_file = args.stacking_file
     else: 
-        stacking_file = "../Mfold/parameters/stacking_1988.csv"
+        stacking_file = os.path.join(script_dir, 'parameters', 'stacking_1988.csv')
 
     read_parameters(loop_file, stacking_file)
 
-    make_asymmetric_penalty(f, penalty_max)
-
+    
+    
     print(f"Fold {name}\n")
     start_time = time.time()
 
