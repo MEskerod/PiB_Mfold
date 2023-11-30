@@ -1,4 +1,4 @@
-import argparse, sys, math, time
+import argparse, sys, math, time, os
 import numpy as np
 import pandas as pd
 from Bio import SeqIO
@@ -9,7 +9,7 @@ global basepairs
 basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
 
 ######## READ AND PREPARE INPUT ########
-def read_fasta(input) -> str:
+def read_fasta(input: str) -> str:
     """
     Reads in a FASTA-file and returns the sequence
     If there is more than one sequence in the FASTA file an error is raised 
@@ -43,7 +43,7 @@ def prepare_input(input: str) -> str:
     
     return sequence
 
-def read_parameters(file_loop, file_stacking): 
+def read_parameters(file_loop: str, file_stacking: str) -> tuple[pd.array, pd.array]: 
     """
     Read parameters from two .csv files:
     The .csv files are converted to Pandas tables and defined as the global variable 'parameters'
@@ -66,7 +66,7 @@ def read_parameters(file_loop, file_stacking):
 
     return parameters
 
-def write_dbn(name, sequence, fold, outfile: TextIOWrapper):
+def write_dbn(name: str, sequence: str, fold: str, outfile: TextIOWrapper) -> None:
     """
     Writes sequence and fold to dbn file
 
@@ -83,7 +83,7 @@ def write_dbn(name, sequence, fold, outfile: TextIOWrapper):
 
 ########## FIND LOOP ENERGIES ###############
 
-def loop_greater_10(loop_type, length):
+def loop_greater_10(loop_type: str, length: int) -> float:
     """
     Calculates the energy parameters for loops with a size greater than 10 
     The parameter is calculated as described in 'Improved predictions of secondary structures for RNA'
@@ -100,7 +100,7 @@ def loop_greater_10(loop_type, length):
 
     return G
 
-def find_E1(i, j):
+def find_E1(i: int, j: int) -> float:
     """
     E1 are the energy of base pairing between Si and Sj with one internal edge (hairpin loop) 
     """
@@ -121,14 +121,14 @@ def stacking(i, j, V):
     #If previous bases can form a base pair stacking is possible
     if prev_bp in basepairs: 
         current_bp = sequence[i] + sequence[j]
-        energy = round(parameters[1].at[current_bp, prev_bp] + V[i+1, j-1], 5)
+        energy = parameters[1].at[current_bp, prev_bp] + V[i+1, j-1]
     
     else: 
         energy = float('inf')
     
-    return energy
+    return round(energy, 5)
 
-def bulge_loop_3end(i, j, V): 
+def bulge_loop_3end(i: int, j: int, V: np.array) -> tuple[float, int]: 
     """
     Find the energy parameter of introducing a bulge loop on the 3' end of the strand 
     """
@@ -143,12 +143,12 @@ def bulge_loop_3end(i, j, V):
             BL_energy = parameters[0].at[size, "BL"] + V[i+1, jp] if size <= 10 else loop_greater_10("BL", size) + V[i+1, jp]
 
             if BL_energy < energy: 
-                energy = round(BL_energy, 5)
+                energy = BL_energy
                 ij = jp
     
-    return energy, ij
+    return round(energy, 5), ij
 
-def bulge_loop_5end(i, j, V):
+def bulge_loop_5end(i: int, j: int, V: np.array) -> tuple[float, int]:
     """
     Find the energy parameter of introducing a bulge loop on the 5' end of the strand 
     """
@@ -163,12 +163,12 @@ def bulge_loop_5end(i, j, V):
             BL_energy = parameters[0].at[size, "BL"] + V[ip, j-1] if size <= 10 else loop_greater_10("BL", size) + V[ip, j-1]
 
             if BL_energy < energy: 
-                energy = round(BL_energy, 5)
+                energy = BL_energy
                 ij = ip
 
-    return energy, ij
+    return round(energy, 5), ij
 
-def interior_loop(i, j, V): 
+def interior_loop(i: int, j: int, V: np.array) -> tuple[float, tuple[int, int]]: 
     """
     Find the energy parameter of adding a interior loop
     """
@@ -186,12 +186,12 @@ def interior_loop(i, j, V):
                 
                 #Check if energy is smaller than current min
                 if IL_energy < energy: 
-                    energy = round(IL_energy, 5)
+                    energy = IL_energy
                     ij = (ip, jp)
     
-    return energy, ij
+    return round(energy, 5), ij
 
-def find_E2(i, j, V): 
+def find_E2(i: int, j: int, V: np.array) -> float: 
     """
     E2 is the energy of basepairing between i and j and i' and j' resulting in two internal edges (stacking, bulge loop or internal loop)
     i<i'<j'<j
@@ -200,7 +200,7 @@ def find_E2(i, j, V):
     energy = min(stacking(i, j, V), bulge_loop_3end(i, j, V)[0], bulge_loop_5end(i, j, V)[0], interior_loop(i, j, V)[0])
     return energy
 
-def find_E3(i, j, W): 
+def find_E3(i: int, j: int, W: np.array) -> float: 
     """
     E3 is the energy of a structure that contains more than two internal edges (bifurcating loop)
     The energy is the energy of the sum of the substructures 
@@ -217,7 +217,7 @@ def find_E3(i, j, W):
             ij = (ip, ip+1)
     return energy, ij
 
-def penta_nucleotides(W, V):
+def penta_nucleotides(W: np.array, V: np.array) -> None:
     """
     Fills out the first entries in the matrices V and W 
     The shortest possible subsequences are of length 5 and can only form hairpin loops of size 3 if i and j basepair
@@ -234,7 +234,7 @@ def penta_nucleotides(W, V):
         else: 
             V[i,j] = W[i,j] = parameters[0].at[3, "HL"] 
 
-def find_E4(i, j, W): 
+def find_E4(i: int, j: int, W: np.array) -> tuple[float, tuple[int, int]]: 
     """
     E4 is the energy when i and j are both in base pairs, but not with each other. 
     It find the minimum of combinations of two possible subsequences containing i and j
@@ -253,7 +253,7 @@ def find_E4(i, j, W):
 
 ########### FIND OPTIMAL FOLD #############
 
-def compute_V(i, j, W, V): 
+def compute_V(i: int, j: int, W: np.array, V: np.array) -> None: 
     """
     Computes the minimization over E1, E2 and E3 and fills out the entry at V[i, j]
     """
@@ -266,7 +266,7 @@ def compute_V(i, j, W, V):
 
     V[i, j] = v
 
-def compute_W(i, j, W, V):
+def compute_W(i: int, j: int, W: np.array, V: np.array) -> None:
     """
     Computes the minimization over possibilities for W and fills out the entry at W[i,j]
      Possibilities are: 
@@ -278,7 +278,7 @@ def compute_W(i, j, W, V):
 
     W[i,j] = w
 
-def fold_rna(): 
+def fold_rna() -> tuple[np.array, np.array]: 
     """
     Fills out the W and V matrices to find the fold that gives the minimum free energy
     Follows Mfold as desribed by M. Zuker
@@ -314,7 +314,7 @@ def find_optimal(W) -> float:
 
 ####### BACKTRACKING #######
 
-def trace_V(i, j, W, V, dotbracket): 
+def trace_V(i: int, j: int, W: np.array, V: np.array, dotbracket: list) -> None: 
     """
     Traces backwards trough the V matrix recursively to find the secondary structure
     """
@@ -355,7 +355,7 @@ def trace_V(i, j, W, V, dotbracket):
         dotbracket[i], dotbracket[j] = '(', ')' 
         trace_W(i+1, ij[0], W, V, dotbracket), trace_W(ij[1], j-1, W, V, dotbracket)
 
-def trace_W(i, j, W, V, dotbracket): 
+def trace_W(i: int, j: int, W: np.array, V: np.array, dotbracket: list) -> None: 
     """
     Traces backwards trough the W matrix recursively to find the secondary structure
     """
@@ -374,7 +374,7 @@ def trace_W(i, j, W, V, dotbracket):
         ij = find_E4(i,j,W)[1] 
         trace_W(i, ij[0], W, V, dotbracket), trace_W(ij[1], j, W, V, dotbracket)
 
-def backtrack(W, V): 
+def backtrack(W: np.array, V: np.array) -> str: 
     """
     Backtracks trough the W, V matrices to find the final fold
     Returns the fold as a dotbracket structure
@@ -432,7 +432,9 @@ def main() -> None:
     print(f"Fold {name}")
     start_time = time.time()
 
-    read_parameters("loop.csv", "pairing.csv")
+    #Find absolute path, such that the script can be called from anywhere as long as the parameter files are is same folder
+    script_path = os.path.dirname(os.path.abspath(__file__))
+    read_parameters(os.path.join(script_path, "loop.csv"), os.path.join(script_path, "pairing.csv"))
     
     W, V = fold_rna()
     energy = find_optimal(W)
