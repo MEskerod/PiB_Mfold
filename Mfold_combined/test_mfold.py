@@ -2,10 +2,21 @@ import pytest, sys, subprocess
 import numpy as np
 from io import StringIO
 
-from fold_functions import (make_asymmetric_penalty, loop_greater_10, stacking, bulge_loop_3end, bulge_loop_5end, interior_loop, 
-                            find_E1, find_E3, find_E4, compute_V, fold_rna, find_optimal, backtrack)
+from Mfold import (make_asymmetric_penalty, loop_greater_10, stacking, bulge_loop_3end, bulge_loop_5end, interior_loop, 
+                   find_E1, find_E3, find_E4, compute_V, fold_rna, find_optimal, backtrack, read_fasta, prepare_input, 
+                   read_parameters, parse_asymmetry_parameters, declare_global_variable)
 
-from help_functions import (read_fasta, prepare_input, read_general_parameters, parse_asymmetry_parameters)
+"""
+TESTS THE FUNCTION IN Mfold.py
+THE FILE IS ABLE TO FOLD RNA SECONDARY STRUCTURE USING DIFFERENT PARAMETERS, WHICH IS DEFINED BY THE USER 
+IN THE FILE A LOT OF GLOBAL VARIABLES ARE DECLARED AND USED TROUGHOUT
+
+THIS TEST SCRIPT TESTS ALL THE FUNCTIONALITY IN THE SCRIPT
+SOME OF THE FUNCTIONS FROM THE SCRIPT IS CALLED TO DECLARE GLOBAL VARIABLES WITHIN THE SCRIPT
+"""
+
+declare_global_variable()
+
 
 ### TEST HELPER FUNCTIONS ###
 def test_read_fasta(): 
@@ -58,7 +69,7 @@ def test_loop_greater_10():
     """
     Tests that the correct value is calculated for loops of sizes greater than 10
     """
-    loop, stack = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
     
     IL = [6.4, 6.81, 7.1, 7.33, 7.52]
     BL =[5.6, 6.01, 6.3 , 6.53, 6.72]
@@ -67,32 +78,32 @@ def test_loop_greater_10():
     sizes = [11, 16, 21, 26, 31]
 
     for n in range(5): 
-        assert round(loop_greater_10("IL", sizes[n], loop),2) == IL[n]
-        assert round(loop_greater_10("BL", sizes[n], loop),2) == BL[n]
-        assert round(loop_greater_10("HL", sizes[n], loop),2) == HL[n]
+        assert round(loop_greater_10("IL", sizes[n]),2) == IL[n]
+        assert round(loop_greater_10("BL", sizes[n]),2) == BL[n]
+        assert round(loop_greater_10("HL", sizes[n]),2) == HL[n]
 
 def test_E1(): 
     """
     The energy of a hairpin loop should corespond to the size of the loop 
     If size >10 the energy should be caculated
     """
-    parameters = [4.5,5.5,4.9,5.1,5.2,5.5,5.8,5.9]
+    true_parameters = [4.5,5.5,4.9,5.1,5.2,5.5,5.8,5.9]
     
-    loop, stack = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
     i = 0 
     for n in range(8): 
         j = n+4
-        assert find_E1(i, j, loop) == parameters[n] 
+        assert find_E1(i, j) == true_parameters[n] 
 
     for j in range(12,32,5): 
-        assert find_E1(i, j, loop) == round(loop_greater_10("HL", j-i-1, loop), 5)
+        assert find_E1(i, j) == round(loop_greater_10("HL", j-i-1), 5)
 
 def test_stacking(): 
     """
     Tests that looking up base pairs in the table returns the correct value
     Furthermore tests that the value added is V[i+1, j-1]
     """
-    loop, stack = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
     
     V = np.array([[1,1,1,1],[1,1,0,1], [1,1,1,1], [1,1,1,1]])
 
@@ -120,93 +131,98 @@ def test_stacking():
 
     for n in range(14): 
         for sequence in pairs[n]: 
-           assert round(stacking(i, j, V, stack, sequence),2) == scores[n] 
+           prepare_input(sequence)
+           assert round(stacking(i, j, V),2) == scores[n] 
 
 def test_bulgeloop_i(): 
     """
     Tests that bulge loops on the 5' end of size 2-10 returns the correct value
     """
-    loop, stack = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
     
     V = np.full((34,34), float('inf'))
     V[11, :] = 0
 
-    sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
+    sequence = prepare_input('CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG')
 
     i_list, j_list = [x for x in range(8)], [x for x in range(33, 25, -1)]
     
     for n in range(8): 
         i, j = i_list[n], j_list[n]
-        assert bulge_loop_5end(i, j, V, loop, stack, sequence, stacking=True) == (loop.at[10-i, "BL"], 11)
+        assert bulge_loop_5end(i, j, V) == (parameters[0].at[10-i, "BL"], 11)
 
 def test_bulgelopp_j():
     """
     Tests that bulge loops on the 3' end of size 2-10 returns the correct value
     """
-    loop, stack = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
     
     V = np.full((34,34), float('inf'))
     V[:, 22] = 0
 
-    sequence = 'AAAAAAAAAAAAAAAAAUUUUUUUUUUUUUUUUU'
+    sequence = prepare_input('AAAAAAAAAAAAAAAAAUUUUUUUUUUUUUUUUU')
 
     i_list, j_list = [x for x in range(8)], [x for x in range(33, 25, -1)]
     
     for n in range(8): 
         i, j = i_list[n], j_list[n]
-        assert bulge_loop_3end(i, j, V, loop, stack, sequence, stacking=True) == (loop.at[10-i, "BL"], 22)
+        assert bulge_loop_3end(i, j, V) == (parameters[0].at[10-i, "BL"], 22)
 
 def test_bulgeloop_size1(): 
     """
     Tests that bulge loops of size 1 returns the loop parameter, stacking parameter and V[i-2, j-1]/V[i-1, j-2]
     """
-    loop, stack = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
 
     V = np.full((10,10), float('inf'))
     V[2, 8], V[2, 6] = 0, 0
 
     sequences = ['AAAAAUUUUU', 'CCCCCGGGGG', 'UUUUUGGGGG']
 
+    declare_global_variable(b_stacking=True)
+
     #Bulge on i
     i, j = 0, 9
 
     for sequence in sequences: 
+        prepare_input(sequence)
         bp = sequence[i] + sequence[j]
-        assert bulge_loop_5end(i, j, V, loop, stack, sequence, stacking=True) == (loop.at[1, "BL"] + stack.at[bp, bp], i+2)
+        assert bulge_loop_5end(i, j, V) == (parameters[0].at[1, "BL"] + parameters[1].at[bp, bp], i+2)
     
     #Bulge on j
     i, j = 1, 8
 
     for sequence in sequences: 
+        prepare_input(sequence)
         bp = sequence[i] + sequence[j]
-        assert bulge_loop_3end(i, j, V, loop, stack, sequence, stacking=True) == (loop.at[1, "BL"] + stack.at[bp, bp], j-2)
+        assert bulge_loop_3end(i, j, V) == (parameters[0].at[1, "BL"] + parameters[1].at[bp, bp], j-2)
 
 def test_interiorloop_symmetric(): 
     """
     Test that the energy of symmetric interior loops is the same as given in the table
     """
-    loop, stack = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
-    asymetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
 
     V = np.full((34,34), float('inf'))
     V[6,27] = 0
 
-    sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
+    sequence = prepare_input('CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG')
 
     i_list = [x for x in range(5)]
     j_ist = [x for x in range(33, 28, -1)]
 
     for n in range(5): 
-        assert interior_loop(i_list[n], j_ist[n], V, loop, sequence, asymetric_penalty_function, False, True) == (loop.at[10-(n*2), "IL"], (6, 27))
+        assert interior_loop(i_list[n], j_ist[n], V) == (parameters[0].at[10-(n*2), "IL"], (6, 27))
 
 def test_interiorloop_asymmetric(): 
     """
     Test that the energy of asymmetric interior loops is the same as given in the table + the penalty
     """
-    loop, stack = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
-    asymetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
 
-    sequence = 'CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG'
+    sequence = prepare_input('CCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGG')
+    declare_global_variable(asymmetry=True)
 
     penalties = [0.1*1, 0.2*2, 0.3*3, 0.4*4]
 
@@ -216,7 +232,7 @@ def test_interiorloop_asymmetric():
     V = np.full((34,34), float('inf'))
     V[6,28] = 0
     for n in range(4): 
-        assert interior_loop(i, j_ist[n], V, loop, sequence, asymetric_penalty_function, False, True) == (round(loop.at[10-n-1, "IL"] + penalties[n], 5), (6, 28))
+        assert interior_loop(i, j_ist[n], V) == (round(parameters[0].at[10-n-1, "IL"] + penalties[n], 5), (6, 28))
     
     #3' loop > 5' end loop
     i_list = [x for x in range(4)]
@@ -224,7 +240,7 @@ def test_interiorloop_asymmetric():
     V = np.full((34,34), float('inf'))
     V[5,27] = 0
     for n in range(4): 
-        assert interior_loop(i_list[n], j, V, loop, sequence, asymetric_penalty_function, False, True) == (round(loop.at[10-n-1, "IL"] + penalties[n], 5), (5, 27))    
+        assert interior_loop(i_list[n], j, V) == (round(parameters[0].at[10-n-1, "IL"] + penalties[n], 5), (5, 27))    
 
 def test_bifurcation(): 
     """
@@ -263,10 +279,12 @@ def test_computeV():
     """
     Tests that if i and j base pair a value is calculated for V[i,j] and otherwise the value should be inf
     """
-    basepairs = ['AU', 'UA', 'CG', 'GC', 'GU', 'UG']
-    parameters = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
-    asymetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
-    sequence = "ACGUACGUACGUACGUACGUACGU"
+    basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
+    sequence = prepare_input("ACGUACGUACGUACGUACGUACGU")
+    declare_global_variable(b_stacking=True, asymmetry=True)
+
     N = len(sequence)
     V, W = np.zeros((N, N)), np.zeros((N, N))
 
@@ -274,7 +292,7 @@ def test_computeV():
         for i in range(0, N-5): 
             j = i+l
             if j < N: 
-                compute_V(i, j, W, V, sequence, parameters, asymetric_penalty_function, True, False, True)
+                compute_V(i, j, W, V)
                 if sequence[i]+sequence[j] in basepairs:
                     assert V[i,j] != float('inf')
                 else: 
@@ -284,8 +302,10 @@ def test_foldRNA():
     """
     Tests that the correct matrices are outputted for one sequence
     """
-    parameters = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
-    asymetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
+    parameters = read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
+    declare_global_variable(b_stacking=True, asymmetry=True)
+    prepare_input('AAUCGUUCCGGU')
 
     W, V = np.full((12, 12), float('inf')), np.full((12, 12), float('inf'))
     W[0, 5:] = [4.5, 3.6, 3.6, 3.6, 2.5, 1.2, 0.5]
@@ -307,7 +327,7 @@ def test_foldRNA():
     V[5, 9:11] = [4.5, 5.5]
     V[6, 10] = 4.5
     
-    true_W, true_V = fold_rna("AAUCGUUCCGGU", parameters, asymetric_penalty_function, True, False, True)
+    true_W, true_V = fold_rna()
     assert true_W.all() == W.all() 
     assert true_V.all() == V.all()
 
@@ -333,11 +353,14 @@ def test_backtrack():
     """
     Tests that backtrack is done correctly trough for one sequence
     """
-    parameters = read_general_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
-    assymetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
-    W, V = fold_rna("AAUCGUUCCGGU", parameters, assymetric_penalty_function, True, False, True)
+    read_parameters("parameters/loop_1989.csv", "parameters/stacking_1988.csv")
+    make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
+    prepare_input('AAUCGUUCCGGU')
+    declare_global_variable(b_stacking=True, asymmetry=True)
 
-    assert backtrack(W, V, parameters, "AAUCGUUCCGGU", assymetric_penalty_function, True, False, True) == '.((((...))))'
+    W, V = fold_rna()
+
+    assert backtrack(W, V) == '.((((...))))'
 
 def test_argparser():
     """
@@ -345,28 +368,28 @@ def test_argparser():
     """ 
 
     #Other parameters
-    result = subprocess.Popen([sys.executable, "main.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-lp", "1988"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.Popen([sys.executable, "Mfold.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-lp", "1988"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = result.communicate()
     assert "Energy of optimal fold is -56.3 kcal/mol" in stdout.decode('utf-8')
     assert "..(((((((((....((((((((..(((..((((..((.....))..))))..)))...))))))))..((((((...((.((((((((.....))))))))..)).))))))))))))))).." in stdout.decode('utf-8')
     assert '' == stderr.decode('utf-8')
 
     #With bulge stacking
-    result = subprocess.Popen([sys.executable, "main.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.Popen([sys.executable, "Mfold.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = result.communicate()
     assert "Energy of optimal fold is -50.0 kcal/mol" in stdout.decode('utf-8')
     assert "..(((((((((....((((((((........((((.....))))(((......)))...))))))))..(((((((..((.((((((((.....))))))))..)))))))))))))))))).." in stdout.decode('utf-8') 
     assert '' == stderr.decode('utf-8')
     
     #Asymmetric
-    result = subprocess.Popen([sys.executable, "main.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-a", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.Popen([sys.executable, "Mfold.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-a", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = result.communicate()
     assert "Energy of optimal fold is -49.6 kcal/mol" in stdout.decode('utf-8')
     assert "..(((((((((....((((((((........((((.....))))(((......)))...))))))))..(((((((..((.((((((((.....))))))))..)))))))))))))))))).." in stdout.decode('utf-8')
     assert '' == stderr.decode('utf-8')
 
     #Other assymetry parameters
-    result = subprocess.Popen([sys.executable, "main.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-a", "-A", "[0.7, 0.6, 0.4, 0.2, 0.1]; 6", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.Popen([sys.executable, "Mfold.py", "-i", "AUGCCGACGGUCAUAGGACGGGGGAAACACCCGGACUCAUUCCGAACCCGGAAGUUAAGCCCCGUUCCGUCCCGCACAGUACUGUGUUCCGAGAGGGCACGGGAACUGCGGGAACCGUCGGCUU", "-a", "-A", "[0.7, 0.6, 0.4, 0.2, 0.1]; 6", "-b"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = result.communicate()
     assert '' == stderr.decode('utf-8')
     assert "Energy of optimal fold is -49.5 kcal/mol" in stdout.decode('utf-8')
