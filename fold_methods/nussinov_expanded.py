@@ -97,7 +97,8 @@ def fill_S(sequence: str, parameters: pd.array) -> np.array:
     N = len(sequence)
     S = np.zeros([N, N])
 
-    for l in range(4, N): #Computes the best score for all subsequences that are 5 nucleotides or longer
+    for l in range(6, N): #Computes the best score for all subsequences that are 7 nucleotides or longer
+    #It has to be 7 nucleotides, since the shortest loop is 3 unpaired, and the first base pair doesn't count
         for i in range(0, N-4): 
             j = i+l
             if j < N:
@@ -195,7 +196,7 @@ def main() -> None:
     S = fill_S(sequence, parameters)
     energy = find_optimal(S)
     fold = fold_RNA(S, sequence, parameters)
-
+    
     #Write to outfile
     if args.outfile == sys.stdout: 
         args.outfile.write(fold + "\n\n")

@@ -33,7 +33,7 @@ def run_Mfold_orginal(file: str, outdir: str) -> None:
         - outdir: directory, where structure should be outputted to
     """
     outputfile = os.path.join(outdir, os.path.splitext(os.path.basename(file))[0])
-    command = f"python3 ../Mfold/main.py -f {file} -lp 1988 -o {outputfile}"
+    command = f"python3 ../Mfold_combined/Mfold.py -f {file} -lp 1988 -o {outputfile}"
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
 
@@ -51,7 +51,7 @@ def run_Mfold_newest(file: str, outdir: str) -> None:
         - outdir: directory, where structure should be outputted to
     """
     outputfile = os.path.join(outdir, os.path.splitext(os.path.basename(file))[0])
-    command = f"python3 ../Mfold/main.py -f {file} -b -a -c -o {outputfile}"
+    command = f"python3 ../Mfold_combined/Mfold.py -f {file} -b -a -c -o {outputfile}"
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
 
